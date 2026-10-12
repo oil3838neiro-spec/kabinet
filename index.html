@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>КабинетЪ кладоискателя</title>
-    <link rel="manifest" href="/manifest.json">
+    <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#5e4a32">
     <meta name="description" content="КабинетЪ кладоискателя — карты, заметки, маршруты по Тульской области">
-    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
-    <link rel="apple-touch-icon" href="/icon-192.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+    <link rel="apple-touch-icon" href="icon-192.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -1645,7 +1645,7 @@
                 // ВСЕГДА запрашиваем свежий файл, чтобы узнать его версию.
                 let resp;
                 try {
-                    resp = await fetch('/data/urochisha.json', { cache: 'no-store' });
+                    resp = await fetch('data/urochisha.json', { cache: 'no-store' });
                 } catch (netErr) {
                     // Оффлайн: работаем на том, что уже лежит в IndexedDB.
                     console.warn('[PWA] База недоступна (оффлайн):', netErr);
@@ -3164,7 +3164,7 @@
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', function() {
-                navigator.serviceWorker.register('/service-worker.js')
+                navigator.serviceWorker.register('service-worker.js')
                     .then(function(reg) {
                         console.log('[PWA] Service Worker зарегистрирован. Scope:', reg.scope);
                     })

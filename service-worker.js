@@ -10,17 +10,24 @@ const CACHE_STATIC  = CACHE_NAME + '-static';              // HTML/JSON/CSS/JS, 
 const CACHE_DATA    = CACHE_NAME + '-data';                // data/urochisha.json
 const CACHE_IMAGES  = CACHE_NAME + '-images';              // screenshots/*.jpg
 
+// Базовый путь развёртывания (для GitHub Pages: '/kabinet/').
+// self.location — URL самого service-worker.js; относительные пути
+// резолвятся от него, поэтому всё работает и в корне, и в подкаталоге.
+const BASE_PATH  = new URL('./', self.location).pathname;              // '/kabinet/' | '/'
+const DATA_PATH  = new URL('./data/', self.location).pathname;         // '/kabinet/data/'
+const SHOTS_PATH = new URL('./screenshots/', self.location).pathname;  // '/kabinet/screenshots/'
+
 // Ядро приложения — кэшируем при установке.
 // Скриншоты (1912 шт., ~130 МБ) НЕ прекэшируем: они попадают в кэш
 // лениво, при первом открытии карточки (cache-first).
 const PRECACHE_URLS = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/icon-192.png',
-  '/icon-512.png',
-  '/icon-maskable-512.png',
-  '/data/urochisha.json'
+  './',
+  './index.html',
+  './manifest.json',
+  './icon-192.png',
+  './icon-512.png',
+  './icon-maskable-512.png',
+  './data/urochisha.json'
 ];
 
 // ---------- Установка ----------
@@ -123,13 +130,13 @@ self.addEventListener('fetch', (event) => {
   }
 
   // 2) Данные урочищ (JSON) — stale-while-revalidate (оффлайн из кэша).
-  if (url.origin === self.location.origin && url.pathname.startsWith('/data/')) {
+  if (url.origin === self.location.origin && url.pathname.startsWith(DATA_PATH)) {
     event.respondWith(staleWhileRevalidate(request, CACHE_DATA));
     return;
   }
 
   // 3) Скриншоты РККА — Cache First (после первого запроса хранится навсегда).
-  if (url.origin === self.location.origin && url.pathname.startsWith('/screenshots/')) {
+  if (url.origin === self.location.origin && url.pathname.startsWith(SHOTS_PATH)) {
     event.respondWith(cacheFirst(request, CACHE_IMAGES));
     return;
   }
@@ -138,7 +145,7 @@ self.addEventListener('fetch', (event) => {
   if (
     url.origin === self.location.origin &&
     (request.mode === 'navigate' ||
-     url.pathname === '/' ||
+     url.pathname === BASE_PATH ||
      url.pathname.endsWith('.html') ||
      url.pathname.endsWith('.css') ||
      url.pathname.endsWith('.js') ||
