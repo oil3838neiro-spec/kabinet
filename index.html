@@ -1,0 +1,3185 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>КабинетЪ кладоискателя</title>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#5e4a32">
+    <meta name="description" content="КабинетЪ кладоискателя — карты, заметки, маршруты по Тульской области">
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
+    <link rel="apple-touch-icon" href="/icon-192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="КабинетЪ">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{background:#dcd3c6;background-image:radial-gradient(circle at 20% 30%,#c4b5a0,#a68f78);height:100vh;overflow:hidden;padding:0;font-family:'Playfair Display','Georgia',serif}
+        .catalog-container{max-width:1850px;margin:2rem auto;background:#ece3d5;background-image:linear-gradient(145deg,#f5ede1,#dacfbb);padding:2rem 1.8rem 0;height:calc(100vh - 4rem);display:flex;flex-direction:column;overflow:hidden;border-radius:32px;box-shadow:0 25px 40px rgba(0,0,0,0.5),inset 0 0 0 1px #c6b69b,inset 0 0 30px #b8a68b;border:3px solid #b49b7a;position:relative}
+        .catalog-container::before{content:"";position:absolute;top:10px;left:10px;right:10px;bottom:10px;border:1px dashed #b49b7a;opacity:0.3;pointer-events:none;border-radius:20px}
+        .catalog-header{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;margin-bottom:2rem;border-bottom:3px double #7a654a;padding-bottom:0.8rem;gap:15px;position:relative;flex-shrink:0}
+        .catalog-header h1{font-size:2.4rem;font-weight:700;letter-spacing:6px;color:#2b1a0a;text-transform:uppercase;font-family:'Old Standard TT',serif;text-shadow:2px 2px 0 #b69f7e, 4px 4px 8px rgba(0,0,0,0.15);font-style:italic;margin-top:10px}
+        .catalog-header h1 small{font-size:0.85rem;font-weight:400;margin-left:15px;color:#4f3c26;background:#b8a185;padding:0.1rem 1.2rem;border-radius:30px;opacity:0.85;font-style:italic;border:1px solid #8f7a5c;font-family:'Old Standard TT',serif;letter-spacing:2px;box-shadow:inset 0 1px 4px rgba(255,255,255,0.4)}
+        .header-controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+        .btn{background:#5e4a32;color:#f0e3d0;border:none;padding:0.5rem 1.2rem;border-radius:40px;font-family:'Playfair Display',serif;font-size:0.85rem;font-weight:700;cursor:pointer;transition:0.2s;box-shadow:0 4px 8px rgba(0,0,0,0.2);border:1px solid #8f7a5c;white-space:nowrap}
+        .btn:hover{background:#7a644a;transform:scale(1.02)}
+        .btn:active{transform:scale(0.97)}
+        .btn-map{background:#1a5a7a;border-color:#0d4a6a}
+        .btn-map:hover{background:#2a7a9a}
+        .btn-save{background:#1a7a3a;border-color:#0a5a2a}
+        .btn-save:hover{background:#2a9a4a;transform:scale(1.05)}
+        .btn-save-success{background:#0a7a2a;border-color:#0a5a2a;animation:pulse 1s ease}
+        @keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.05)}100%{transform:scale(1)}}
+        .btn-gpx{background:#3a6a5a;border-color:#2a5a4a}
+        .btn-gpx:hover{background:#4a8a6a}
+        .btn-kml{background:#6a5a1a;border-color:#5a4a0a}
+        .btn-kml:hover{background:#8a7a2a}
+        .btn-gearth{background:#1a6a5a;border-color:#0a5a4a}
+        .btn-gearth:hover{background:#2a8a6a}
+        .btn-add-fixed{position:fixed;bottom:30px;right:30px;z-index:999;background:#5e4a32;color:#f0e3d0;border:none;padding:0.7rem 1.8rem;border-radius:60px;font-family:'Playfair Display',serif;font-size:1rem;font-weight:700;cursor:pointer;transition:0.2s;box-shadow:0 6px 20px rgba(0,0,0,0.5);border:1px solid #8f7a5c}
+        .btn-add-fixed:hover{background:#7a644a;transform:scale(1.05)}
+        .btn-add-fixed:active{transform:scale(0.95)}
+        .table-wrap{flex:1 1 auto;min-height:0;max-height:100%;overflow-y:auto;overflow-x:auto;border-radius:24px;background:#d6c5ae;padding:6px;box-shadow:inset 0 0 0 2px #b49b7a,0 10px 20px rgba(0,0,0,0.3)}
+        #urTable thead th{position:sticky;top:0;z-index:4;background:#cfbfa6}
+        table{width:100%;border-collapse:separate;border-spacing:0;background:#f6efe2;border-radius:20px;overflow:hidden;font-size:0.78rem;min-width:850px;font-family:'Playfair Display',serif}
+        th{background:#5e4a32;color:#f0e3d0;font-weight:700;letter-spacing:0.5px;padding:0.6rem 0.2rem;text-align:center;border-bottom:3px solid #382b1b;text-transform:uppercase;font-family:'Playfair Display',serif;font-size:0.65rem}
+        td{padding:0.3rem 0.1rem;text-align:center;border-bottom:1px solid #d2c0a8;vertical-align:middle;color:#2c1e0e}
+        tr:last-child td{border-bottom:none}
+        tr:hover td{background:#e7dac8}
+        input,select,textarea{padding:0.25rem 0.15rem;border:1px solid #a38763;border-radius:30px;background:#fcf6eb;font-family:'Playfair Display',serif;text-align:center;font-size:0.78rem;transition:0.2s;width:100%}
+        input:focus,select:focus,textarea:focus{background:#fffcf5;border-color:#6b5538;outline:none;box-shadow:0 0 0 2px #b49b7a}
+        .col-checkbox{width:25px;min-width:25px;text-align:center}
+        .col-checkbox input[type="checkbox"]{width:14px;height:14px;cursor:pointer;accent-color:#5e4a32}
+        .col-name input{min-width:40px;max-width:80px;font-size:0.7rem}
+        .col-coords input{min-width:100px;max-width:140px;font-size:0.7rem}
+        .col-district input{min-width:30px;max-width:60px;font-size:0.6rem}
+        .col-status select{min-width:50px;max-width:70px;font-size:0.7rem}
+        .col-km{min-width:50px;max-width:70px;text-align:center;font-weight:600;color:#1a5a7a}
+        .location-link{color:#1a5a7a;text-decoration:underline;cursor:pointer;font-weight:600;font-size:1.1rem}
+        .location-link:hover{color:#2a7a9a}
+        .copy-coords{color:#5e4a32;cursor:pointer;font-size:1rem;transition:0.2s}
+        .copy-coords:hover{color:#7a644a}
+        .etomesto-link{color:#5a4a3a;cursor:pointer;font-size:1.1rem;transition:0.2s}
+        .etomesto-link:hover{color:#7a644a;transform:scale(1.1)}
+        .btn-delete{background:#8b3a2a;color:#f0e3d0;border:none;border-radius:50%;width:22px;height:22px;font-size:0.7rem;cursor:pointer;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
+        .btn-delete:hover{background:#aa4a36;transform:scale(1.1)}
+        .toast{position:fixed;bottom:30px;right:30px;background:#2d6a4f;color:#f0e3d0;padding:0.8rem 1.6rem;border-radius:40px;font-family:'Playfair Display',serif;box-shadow:0 8px 20px rgba(0,0,0,0.5);border:1px solid #4d8a6a;animation:slideUp 0.4s ease;z-index:9999}
+        .toast.error{background:#8a3a2a;border-color:#6a2a1a}
+        .toast.success{background:#2d6a4f;border-color:#1d5a3a}
+        .toast.info{background:#3a5a7a;border-color:#2a4a6a}
+        @keyframes slideUp{from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:translateY(0)}}
+        .map-modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:1000;justify-content:center;align-items:center;padding:20px}
+        .map-modal.active{display:flex}
+        .map-modal-content{background:#f6efe2;border-radius:30px;padding:20px;max-width:900px;width:100%;max-height:90vh;box-shadow:0 25px 60px rgba(0,0,0,0.8);border:3px solid #b49b7a;position:relative}
+        .map-modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;padding-bottom:10px;border-bottom:2px solid #d2c0a8;flex-wrap:wrap;gap:6px}
+        .map-modal-header h2{font-size:1.2rem;color:#2b1a0a;font-family:'Playfair Display',serif}
+        .map-modal-header .btn-add-marker{background:#4a6a3a;color:#f0e3d0;border:none;padding:0.3rem 1rem;border-radius:40px;font-size:0.8rem;cursor:pointer;transition:0.2s;font-family:'Playfair Display',serif;border:1px solid #3a5a2a}
+        .map-modal-header .btn-add-marker:hover{background:#5a8a4a;transform:scale(1.02)}
+        .map-modal-header .btn-add-marker.active{background:#8a3a2a;border-color:#6a2a1a}
+        .map-modal-header .btn-minimize-map{background:#5e4a32;color:#f0e3d0;border:none;padding:0.3rem 1rem;border-radius:40px;font-size:0.8rem;cursor:pointer;transition:0.2s;font-family:'Playfair Display',serif;border:1px solid #8f7a5c}
+        .map-modal-header .btn-minimize-map:hover{background:#7a644a;transform:scale(1.02)}
+        .map-modal-header .btn-fullscreen-map{background:#1a5a7a;color:#f0e3d0;border:none;padding:0.3rem 1rem;border-radius:40px;font-size:0.8rem;cursor:pointer;transition:0.2s;font-family:'Playfair Display',serif;border:1px solid #0d4a6a}
+        .map-modal-header .btn-fullscreen-map:hover{background:#2a7a9a;transform:scale(1.02)}
+        .map-modal-header .btn-etomesto{background:#5a4a3a;color:#f0e3d0;border:none;padding:0.3rem 1rem;border-radius:40px;font-size:0.8rem;cursor:pointer;transition:0.2s;font-family:'Playfair Display',serif;border:1px solid #4a3a2a}
+        .map-modal-header .btn-etomesto:hover{background:#7a644a;transform:scale(1.02)}
+        .map-modal-close{background:#8b3a2a;color:#f0e3d0;border:none;border-radius:50%;width:32px;height:32px;font-size:1.2rem;cursor:pointer;font-weight:700}
+        .map-modal-close:hover{background:#aa4a36;transform:scale(1.1)}
+        #map-container{width:100%;height:480px;border-radius:20px;overflow:hidden;border:2px solid #b49b7a}
+        .file-input-wrapper{display:none}
+        .leaflet-control-layers{background:#f6efe2 !important;border:2px solid #b49b7a !important;border-radius:12px !important;padding:6px 10px !important;font-family:'Playfair Display',serif !important;font-size:0.8rem !important;box-shadow:0 4px 12px rgba(0,0,0,0.3) !important}
+        .leaflet-control-layers label{color:#2b1a0a !important;cursor:pointer;padding:2px 0}
+        .leaflet-control-layers input[type="radio"]{margin-right:6px}
+        .search-box{background:#dacdb8;padding:0.2rem 0.8rem;border-radius:60px;border:1px solid #a58966;display:flex;align-items:center;gap:5px;flex:0 1 180px}
+        .search-box input{background:#fcf6eb;border:1px solid #a38763;border-radius:40px;padding:0.2rem 0.6rem;font-family:'Playfair Display',serif;font-size:0.75rem;color:#2d1e0d;width:100%}
+        .group-filter{background:#dacdb8;padding:0.2rem 0.8rem;border-radius:60px;border:1px solid #a58966;display:flex;align-items:center;gap:5px}
+        .group-filter select{background:#fcf6eb;border:1px solid #a38763;border-radius:40px;padding:0.2rem 0.6rem;font-family:'Playfair Display',serif;font-size:0.75rem;color:#2d1e0d}
+        .group-filter select:focus{outline:none;border-color:#6b5538;box-shadow:0 0 0 2px #b49b7a}
+        .status-filter{background:#dacdb8;padding:0.2rem 0.8rem;border-radius:60px;border:1px solid #a58966;display:flex;align-items:center;gap:5px}
+        .status-filter select{background:#fcf6eb;border:1px solid #a38763;border-radius:40px;padding:0.2rem 0.6rem;font-family:'Playfair Display',serif;font-size:0.75rem;color:#2d1e0d}
+        .status-filter select:focus{outline:none;border-color:#6b5538;box-shadow:0 0 0 2px #b49b7a}
+        .btn-clear-filter{background:#8b3a2a;color:#f0e3d0;border:none;padding:0.2rem 0.8rem;border-radius:40px;font-size:0.7rem;cursor:pointer;font-family:'Playfair Display',serif;border:1px solid #6a2a1a;transition:0.2s;white-space:nowrap}
+        .btn-clear-filter:hover{background:#aa4a36;transform:scale(1.02)}
+        .selection-counter{font-size:0.7rem;color:#4d3922;background:#dacdb8;padding:0.1rem 0.8rem;border-radius:30px;white-space:nowrap;min-width:140px;text-align:center;display:inline-block}
+        .fav-counter{font-size:0.7rem;color:#4d3922;background:#dacdb8;padding:0.1rem 0.8rem;border-radius:30px;white-space:nowrap;text-align:center;display:inline-block}
+        .fav-star{cursor:pointer;font-size:1.1rem;color:#c9b39a;transition:0.2s;user-select:none;display:inline-block}
+        .fav-star:hover{transform:scale(1.2)}
+        .fav-star.active{color:#f5b301;text-shadow:0 0 4px #f5b301}
+        .btn-select-all{background:#3a5a6a;color:#f0e3d0;border:none;padding:0.2rem 0.8rem;border-radius:40px;font-size:0.7rem;cursor:pointer;font-family:'Playfair Display',serif;border:1px solid #2a4a5a;transition:0.2s;white-space:nowrap}
+        .btn-select-all:hover{background:#4a7a8a;transform:scale(1.02)}
+        .distance-filter{background:#dacdb8;padding:0.2rem 0.8rem;border-radius:60px;border:1px solid #a58966;display:flex;align-items:center;gap:5px}
+        .distance-filter select{background:#fcf6eb;border:1px solid #a38763;border-radius:40px;padding:0.2rem 0.6rem;font-family:'Playfair Display',serif;font-size:0.75rem;color:#2d1e0d}
+        .distance-filter select:focus{outline:none;border-color:#6b5538;box-shadow:0 0 0 2px #b49b7a}
+        .btn-distance{background:#4a6a3a;color:#f0e3d0;border:none;padding:0.2rem 1rem;border-radius:40px;font-size:0.75rem;cursor:pointer;font-family:'Playfair Display',serif;border:1px solid #3a5a2a;transition:0.2s;white-space:nowrap}
+        .btn-distance:hover{background:#5a8a4a;transform:scale(1.02)}
+        .compass{position:absolute;top:10px;right:20px;z-index:10;font-size:2.4rem;cursor:pointer;opacity:0.75;transition:0.3s;text-shadow:0 2px 12px rgba(0,0,0,0.12);user-select:none;font-family:'Playfair Display',serif;line-height:1}
+        .compass:hover{opacity:1;transform:scale(1.08) rotate(-10deg)}
+        .compass:active{transform:scale(0.92)}
+        .card-modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:2000;justify-content:center;align-items:center;padding:20px}
+        .card-modal.active{display:flex}
+        .card-modal-content{background:#f6efe2;border-radius:30px;padding:20px;max-width:700px;width:100%;max-height:90vh;box-shadow:0 25px 60px rgba(0,0,0,0.8);border:3px solid #b49b7a;position:relative;overflow-y:auto}
+        .card-modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;padding-bottom:10px;border-bottom:2px solid #d2c0a8}
+        .card-modal-header h2{font-size:1.4rem;color:#2b1a0a;font-family:'Playfair Display',serif}
+        .card-modal-close{background:#8b3a2a;color:#f0e3d0;border:none;border-radius:50%;width:32px;height:32px;font-size:1.2rem;cursor:pointer;font-weight:700}
+        .card-modal-close:hover{background:#aa4a36;transform:scale(1.1)}
+        .card-archival-box{background:#f5ede1;border:1px solid #d2c0a8;border-radius:12px;padding:12px;font-family:'Playfair Display',serif;font-size:0.9rem;color:#2b1a0a;line-height:1.6}
+        .card-archival-row{display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px dashed #d2c0a8}
+        .card-archival-row:last-child{border-bottom:none}
+        .card-archival-label{color:#7a644a;font-weight:600}
+        .card-archival-value{color:#2b1a0a;font-weight:400;text-align:right}
+        .card-archival-church{color:#8b3a2a;font-weight:700}
+        .card-sobory-box{background:#f0e6d8;border:1px solid #c9b39a;border-radius:12px;padding:12px;font-family:'Playfair Display',serif;font-size:0.9rem;color:#2b1a0a;line-height:1.6}
+        .card-sobory-row{display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px dashed #c9b39a}
+        .card-sobory-row:last-child{border-bottom:none}
+        .card-sobory-label{color:#7a644a;font-weight:600}
+        .card-sobory-value{color:#2b1a0a;font-weight:400;text-align:right}
+        .card-sobory-status-active{color:#2d6a4f;font-weight:700}
+        .card-sobory-status-inactive{color:#8b6a2a;font-weight:700}
+        .card-sobory-status-lost{color:#8b3a2a;font-weight:700}
+        .church-icon,.archival-icon{display:inline-block;margin-left:3px;font-size:0.85rem;vertical-align:middle}
+        .church-icon{color:#8b3a2a}
+        .archival-icon{color:#5a4a7a}
+        .card-body{display:flex;flex-direction:column;gap:12px}
+        .card-field{display:flex;flex-direction:column;gap:4px}
+        .card-field label{font-weight:700;font-size:0.85rem;color:#2b1a0a;font-family:'Playfair Display',serif}
+        .card-field input,.card-field textarea{padding:0.4rem 0.6rem;border:1px solid #a38763;border-radius:12px;background:#fcf6eb;font-family:'Playfair Display',serif;font-size:0.9rem;width:100%;color:#2b1a0a}
+        .card-field textarea{resize:vertical}
+        .card-field input:focus,.card-field textarea:focus{outline:none;border-color:#6b5538;box-shadow:0 0 0 2px #b49b7a}
+        .card-gallery{display:flex;flex-wrap:wrap;gap:8px;padding:8px 0;min-height:60px;background:#fcf6eb;border-radius:12px;border:1px dashed #b49b7a;padding:10px}
+        .card-gallery img{width:80px;height:80px;object-fit:cover;border-radius:8px;border:2px solid #b49b7a;cursor:pointer;transition:0.2s}
+        .card-gallery img:hover{transform:scale(1.05);border-color:#5e4a32}
+        .card-gallery .empty-text{color:#a38763;font-style:italic;padding:10px;width:100%;text-align:center}
+        .fullscreen-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.92);z-index:3000;justify-content:center;align-items:center;cursor:pointer}
+        .fullscreen-overlay.active{display:flex}
+        .fullscreen-overlay img{max-width:95%;max-height:95%;object-fit:contain;border-radius:8px;box-shadow:0 0 60px rgba(0,0,0,0.6)}
+        .fullscreen-overlay .close-fullscreen{position:absolute;top:20px;right:30px;font-size:2.5rem;color:#f0e3d0;cursor:pointer;font-weight:300;transition:0.2s}
+        .fullscreen-overlay .close-fullscreen:hover{color:#fff;transform:scale(1.1)}
+        .btn-photo{background:#4a6a3a;color:#f0e3d0;border:none;padding:0.3rem 1rem;border-radius:40px;font-size:0.8rem;cursor:pointer;font-family:'Playfair Display',serif;border:1px solid #3a5a2a;transition:0.2s}
+        .btn-photo:hover{background:#5a8a4a;transform:scale(1.02)}
+        .btn-small{padding:0.2rem 0.8rem;font-size:0.7rem}
+        .save-status{display:inline-flex;align-items:center;justify-content:center;gap:4px;font-family:'Playfair Display',serif;font-size:0.75rem;color:#2d6a4f;background:#e7f0e9;padding:4px 10px;border-radius:30px;border:1px solid #b7d3bd;transition:all 0.3s ease;white-space:nowrap;margin-left:8px;min-width:180px}
+        .save-status.saving{color:#7a644a;background:#f5ede1;border-color:#d2c0a8}
+        .save-status.error{color:#8b3a2a;background:#f5e1dd;border-color:#d3b7b7}
+        @media (max-width:700px){.catalog-container{padding:1rem 0.6rem}.catalog-header h1{font-size:1.2rem}.btn{font-size:0.65rem;padding:0.2rem 0.8rem}.btn-add-fixed{bottom:15px;right:15px;padding:0.4rem 1rem;font-size:0.8rem}#map-container{height:300px}.search-box{flex:1 1 100px}.compass{font-size:1.8rem;top:5px;right:10px}.card-modal-content{padding:12px}.card-field input,.card-field textarea{font-size:0.8rem}.card-gallery img{width:60px;height:60px}}
+        @media (max-width:700px){
+            body{height:auto;overflow:auto;padding:1rem 0.6rem}
+            .catalog-container{height:auto;overflow:visible;margin:0 auto;padding:1rem 0.6rem}
+            .table-wrap{flex:none;overflow:visible;max-height:none;min-height:0}
+            #urTable thead th{position:static}
+        }
+    </style>
+</head>
+<body>
+    <div class="catalog-container">
+
+        <div class="catalog-header">
+            <div class="compass" onclick="goHome()" title="На главную (показать все точки)">🧭</div>
+            <h1>КабинетЪ кладоискателя <small>карты, заметки, маршруты</small></h1>
+            <div class="header-controls">
+                <div class="search-box">
+                    <span>🔍</span>
+                    <input type="text" id="searchInput" placeholder="Поиск..." oninput="applySearchDebounced()" />
+                </div>
+                <button class="btn-clear-filter" onclick="clearFilter()">✖ Очистить</button>
+                <div class="group-filter">
+                    <span>📂</span>
+                    <select id="groupFilter" onchange="applyGroupFilter()">
+                        <option value="__all__">Все точки</option>
+                        <option value="__ungrouped__">Без группы</option>
+                        <option value="__my_points__">⭐ Мои точки</option>
+                        <option value="__has_church__">⛪ С церковью (1859)</option>
+                        <option value="__sobory__">⛪ Церкви (Соборы.ру)</option>
+                    </select>
+                </div>
+                <div class="status-filter">
+                    <span>🏷️</span>
+                    <select id="statusFilter" onchange="applyStatusFilter()">
+                        <option value="__all__">Все статусы</option>
+                        <option value="favorite">⭐ Избранное</option>
+                        <option value="урочище">Урочища</option>
+                        <option value="церковь">⛪ Церкви (все)</option>
+                        <option value="церковь_действующая">⛪ Церкви — действующие</option>
+                        <option value="церковь_недействующая">⛪ Церкви — недействующие</option>
+                        <option value="церковь_утраченная">⛪ Церкви — утраченные</option>
+                        <option value="деревня">Деревни</option>
+                        <option value="село">Сёла</option>
+                        <option value="пустошь">Пустоши</option>
+                        <option value="усадьба">Усадьбы</option>
+                    </select>
+                </div>
+                <div class="distance-filter" style="position:relative;">
+                    <span>📏</span>
+                    <input type="text" id="distanceBaseInput" placeholder="Начните печатать название..."
+                           style="min-width:200px;max-width:300px;padding:0.3rem 0.6rem;border:1px solid #a38763;border-radius:40px;background:#fcf6eb;font-family:'Playfair Display',serif;font-size:0.75rem;color:#2d1e0d;"
+                           oninput="filterDistanceBase()"
+                           onfocus="filterDistanceBase()" />
+                    <button class="btn-distance" onclick="sortByDistance()" id="distanceBaseBtn">📏 Рассчитать</button>
+                    <button class="btn-distance" onclick="sortByMyLocation()" title="Определить моё местоположение">📍 Я здесь</button>
+                    <button class="btn-distance" onclick="openCoordsInput()" title="Ввести координаты вручную">🎯 Координаты</button>
+                    <div id="distanceBaseDropdown" style="display:none;position:absolute;top:100%;left:0;right:0;max-height:300px;overflow-y:auto;background:#fcf6eb;border:1px solid #a38763;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.15);z-index:100;margin-top:4px;"></div>
+                </div>
+                <button class="btn-select-all" onclick="toggleSelectAll()" title="Поставить/снять все галочки">☑ Все / Снять</button>
+                <span class="selection-counter" id="selectionCounter">Выбрано: 0 / 0</span>
+                <span class="fav-counter" id="favCounter" title="Избранные точки">⭐ 0</span>
+                
+                <button class="btn btn-map" onclick="showAllOnMap()">🗺️ Карта</button>
+
+                <div style="position:relative;display:inline-block;">
+                    <button class="btn" onclick="toggleImportExport()" style="background:#4a3a5a;border-color:#3a2a4a;">📁 Импорт/Экспорт</button>
+                    <div id="importExportPanel" style="display:none;position:absolute;top:110%;right:0;background:#f6efe2;border:2px solid #b49b7a;border-radius:20px;padding:10px;box-shadow:0 10px 30px rgba(0,0,0,0.3);z-index:100;min-width:200px;">
+                        <div style="display:flex;flex-direction:column;gap:6px;">
+                            <button class="btn btn-kml" onclick="exportKML()" style="width:100%;text-align:center;">🗺️ KML</button>
+                            <button class="btn btn-gpx" onclick="exportGPX()" style="width:100%;text-align:center;">📍 GPX</button>
+                            <button class="btn btn-gearth" onclick="exportGoogleEarthKML()" style="width:100%;text-align:center;">🌍 GEarth</button>
+                            <button class="btn" onclick="exportCSV()" style="background:#2a5a4a;width:100%;text-align:center;">📊 CSV</button>
+                            <hr style="border:1px solid #d2c0a8;width:100%;">
+                            <button class="btn" onclick="document.getElementById('kmlInput').click()" style="width:100%;text-align:center;">📂 Загрузить KML</button>
+                            <button class="btn" onclick="document.getElementById('csvInput').click()" style="background:#2a5a4a;width:100%;text-align:center;">📂 Загрузить CSV</button>
+                            <button class="btn" onclick="document.getElementById('excelInput').click()" style="background:#4a3a5a;width:100%;text-align:center;">📂 Загрузить Excel</button>
+                            <input type="file" id="kmlInput" class="file-input-wrapper" accept=".kml,.kmz" onchange="loadKML(event)" />
+                            <input type="file" id="csvInput" class="file-input-wrapper" accept=".csv" onchange="loadCSV(event)" />
+                            <input type="file" id="excelInput" class="file-input-wrapper" accept=".xlsx,.xls" onchange="loadExcel(event)" />
+                            <hr style="border:1px solid #d2c0a8;width:100%;">
+                            <button class="btn" onclick="importUrochishaBase()" style="background:#3a5a2a;width:100%;text-align:center;">🌲 Загрузить базу урочищ</button>
+                            <hr style="border:1px solid #d2c0a8;width:100%;">
+                            <button class="btn" onclick="exportFullBackup()" style="background:#2a5a4a;width:100%;text-align:center;">💾 Скачать бэкап (JSON)</button>
+                            <button class="btn" onclick="document.getElementById('backupInput').click()" style="background:#5a3a2a;width:100%;text-align:center;">📂 Восстановить из бэкапа</button>
+                            <input type="file" id="backupInput" class="file-input-wrapper" accept=".json" onchange="importFullBackup(event)" />
+                        </div>
+                    </div>
+                </div>
+                <span class="save-status" id="saveStatus" title="Автосохранение включено">✅ Сохранено</span>
+            </div>
+        </div>
+
+        <div class="table-wrap">
+            <table id="urTable">
+                <thead>
+                    <tr>
+                        <th style="width:30px;" title="Избранное">⭐</th>
+                        <th style="width:25px;">✓</th>
+                        <th>Название</th>
+                        <th>Координаты</th>
+                        <th>Район</th>
+                        <th>Статус</th>
+                        <th>КМ</th>
+                        <th>📝</th>
+                        <th>🗺️</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+
+    </div>
+
+    <!-- КАРТА -->
+    <div class="map-modal" id="mapModal">
+        <div class="map-modal-content" id="mapModalContent">
+            <div class="map-modal-header">
+                <div>
+                    <h2 id="mapTitle">📍 Точки на карте</h2>
+                    <div id="mapBasePointInfo" style="display:none;font-size:0.78rem;color:#2b1a0a;margin-top:4px;font-family:'Playfair Display',serif;"></div>
+                </div>
+                <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+                    <button class="btn-add-marker" id="mapAddMarkerBtn" onclick="toggleAddMarkerMode()">➕ Добавить метку</button>
+                    <button class="btn-minimize-map" id="minimizeMapBtn" onclick="minimizeMap()">✖ Свернуть</button>
+                    <button class="btn-fullscreen-map" onclick="toggleMapFullscreen()">⛶ На весь экран</button>
+                    <button class="map-modal-close" onclick="closeMap()">✕</button>
+                </div>
+            </div>
+            <div id="map-container"></div>
+        </div>
+    </div>
+
+    <!-- КАРТОЧКА ТОЧКИ -->
+    <div class="card-modal" id="cardModal">
+        <div class="card-modal-content">
+            <div class="card-modal-header">
+                <h2 id="cardTitle">📄 Карточка точки</h2>
+                <button class="card-modal-close" onclick="closeCard()">✕</button>
+            </div>
+            <div class="card-body">
+                <div class="card-field">
+                    <label>Название</label>
+                    <input type="text" id="cardName" readonly />
+                </div>
+                <div class="card-field">
+                    <label>Координаты</label>
+                    <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+                        <input type="text" id="cardCoords" readonly style="flex:1;min-width:120px;" />
+                        <button class="btn btn-small" onclick="copyCardCoords()">📋 Копировать</button>
+                        <button class="btn btn-small btn-map" onclick="openCardOnMap()">🗺️ Карта</button>
+                        <button class="btn btn-small btn-map" onclick="openCardEsri()">🛰️ ESRI</button>
+                        <button class="btn btn-small" onclick="openCardYandex()">🌐 Яндекс.Карты</button>
+                    </div>
+                </div>
+                <div class="card-field">
+                    <label>Район</label>
+                    <input type="text" id="cardDistrict" readonly />
+                </div>
+                <div class="card-field">
+                    <label>Статус</label>
+                    <input type="text" id="cardStatus" readonly />
+                </div>
+                <div class="card-field">
+                    <button id="cardFavBtn" class="btn btn-save" style="width:100%;" onclick="toggleFavoriteFromCard()">
+                        ☆ Добавить в избранное
+                    </button>
+                </div>
+                <div class="card-field" id="cardRkkaField" style="display:none;">
+                    <label>🗺️ Сравнение: РККА 1941 ↔ Сейчас</label>
+                    <div class="card-rkka-box" style="background:#f5ede1;border:1px solid #d2c0a8;border-radius:12px;padding:8px;">
+                        <div id="cardRkkaMap" style="width:100%;height:450px;border-radius:8px;overflow:hidden;border:1px solid #b49b7a;"></div>
+                        <div style="margin-top:10px;display:flex;align-items:center;gap:10px;">
+                            <span style="font-size:0.75rem;color:#7a644a;white-space:nowrap;">РККА 1941</span>
+                            <input type="range" id="cardRkkaSlider" min="0" max="100" value="0" style="flex:1;cursor:pointer;accent-color:#5e4a32;" oninput="setRkkaOpacity(this.value)" />
+                            <span style="font-size:0.75rem;color:#7a644a;white-space:nowrap;">Сейчас</span>
+                        </div>
+                        <div style="font-size:0.7rem;color:#7a644a;margin-top:4px;font-style:italic;text-align:center;">
+                            Двигайте ползунок для сравнения с современным спутником
+                        </div>
+                    </div>
+                </div>
+                <div class="card-field" id="cardArchivalField" style="display:none;">
+                    <label>🏛️ Архив 1859</label>
+                    <div class="card-archival-box">
+                        <div id="cardArchivalContent"></div>
+                    </div>
+                </div>
+                <div class="card-field" id="cardSoboryField" style="display:none;">
+                    <label>⛪ Церковь (Соборы.ру)</label>
+                    <div class="card-sobory-box">
+                        <div id="cardSoboryContent"></div>
+                    </div>
+                </div>
+                <div class="card-field">
+                    <label>Справка</label>
+                    <textarea id="cardNote" rows="6" placeholder="Введите справку..."></textarea>
+                    <button class="btn btn-save" onclick="saveCardNote()" style="margin-top:6px;">💾 Сохранить справку</button>
+                </div>
+                <div class="card-field">
+                    <label>📷 Фото</label>
+                    <div class="card-gallery" id="cardGallery"></div>
+                    <div style="margin-top:8px;display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+                        <button class="btn btn-photo" onclick="document.getElementById('cardPhotoInput').click()">📤 Загрузить фото</button>
+                        <input type="file" id="cardPhotoInput" class="file-input-wrapper" accept="image/*" multiple onchange="uploadCardPhotos(event)" />
+                        <button class="btn btn-delete" onclick="deleteAllCardPhotos()" style="background:#8b3a2a;color:#f0e3d0;border:none;border-radius:50%;width:28px;height:28px;font-size:0.8rem;cursor:pointer;font-weight:700;">🗑️</button>
+                        <span style="font-size:0.7rem;color:#4d3922;margin-left:10px;" id="cardPhotoCount"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- МОДАЛЬНОЕ ОКНО ВВОДА КООРДИНАТ -->
+    <div class="card-modal" id="coordsModal">
+        <div class="card-modal-content" style="max-width:440px;">
+            <div class="card-modal-header">
+                <h2>🎯 Ввод координат</h2>
+                <button class="card-modal-close" onclick="closeCoordsInput()">✕</button>
+            </div>
+            <div class="card-body">
+                <div class="card-field">
+                    <label>Координаты базовой точки</label>
+                    <input type="text" id="coordsModalInput" placeholder="53.123, 36.456"
+                           onkeydown="if(event.key==='Enter'){event.preventDefault();submitCoordsInput();}" />
+                    <div style="font-size:0.75rem;color:#4d3922;margin-top:4px;">
+                        Формат: 53.123, 36.456 или 53.123 36.456
+                    </div>
+                </div>
+                <button class="btn btn-save" onclick="submitCoordsInput()" style="margin-top:6px;">📏 Рассчитать</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- FULLSCREEN OVERLAY -->
+    <div class="fullscreen-overlay" id="fullscreenOverlay" onclick="closeFullscreen()">
+        <span class="close-fullscreen" onclick="closeFullscreen()">✕</span>
+        <img id="fullscreenImage" src="" alt="Фото на весь экран" />
+    </div>
+
+    <button class="btn-add-fixed" onclick="addRow()">➕ Добавить точку</button>
+
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // ============================================================
+        //  ИНИЦИАЛИЗАЦИЯ INDEXEDDB — ВСЕ ДАННЫЕ ХРАНЯТСЯ ЗДЕСЬ
+        // ============================================================
+        let db = null;
+        const DB_NAME = 'KladFinderDB';
+        const DB_VERSION = 4;
+        const STORE_PHOTOS = 'photos';
+        const STORE_NOTES = 'notes';
+        const STORE_COLLECTION = 'collection';
+        const STORE_META = 'meta';
+
+        function initDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+                request.onupgradeneeded = function(e) {
+                    const db = e.target.result;
+                    
+                    if (!db.objectStoreNames.contains(STORE_PHOTOS)) {
+                        const store = db.createObjectStore(STORE_PHOTOS, { keyPath: 'id' });
+                        store.createIndex('rowId', 'rowId', { unique: false });
+                    }
+                    if (!db.objectStoreNames.contains(STORE_NOTES)) {
+                        const store = db.createObjectStore(STORE_NOTES, { keyPath: 'id' });
+                        store.createIndex('rowId', 'rowId', { unique: false });
+                    }
+                    if (!db.objectStoreNames.contains(STORE_COLLECTION)) {
+                        const store = db.createObjectStore(STORE_COLLECTION, { keyPath: 'id' });
+                    }
+                    if (!db.objectStoreNames.contains(STORE_META)) {
+                        db.createObjectStore(STORE_META, { keyPath: 'id' });
+                    }
+                };
+                request.onsuccess = function(e) {
+                    db = e.target.result;
+                    resolve(db);
+                };
+                request.onerror = function(e) {
+                    reject(e.target.error);
+                };
+            });
+        }
+
+        // ---------- ОСНОВНАЯ КОЛЛЕКЦИЯ (ВМЕСТО localStorage) ----------
+        function saveCollectionToDB(data) {
+            return new Promise((resolve, reject) => {
+                if (!db) { reject('DB not initialized'); return; }
+                const tx = db.transaction(STORE_COLLECTION, 'readwrite');
+                const store = tx.objectStore(STORE_COLLECTION);
+                const request = store.put({ id: 'main_collection', data: data, updated: Date.now() });
+                request.onsuccess = () => resolve();
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        function loadCollectionFromDB() {
+            return new Promise((resolve, reject) => {
+                if (!db) { reject('DB not initialized'); return; }
+                const tx = db.transaction(STORE_COLLECTION, 'readonly');
+                const store = tx.objectStore(STORE_COLLECTION);
+                const request = store.get('main_collection');
+                request.onsuccess = () => {
+                    if (request.result) {
+                        resolve(request.result.data || []);
+                    } else {
+                        resolve([]);
+                    }
+                };
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        // ---------- МЕТАДАННЫЕ (версия загруженного файла) ----------
+        function saveMetaToDB(key, value) {
+            return new Promise((resolve, reject) => {
+                if (!db) { reject('DB not initialized'); return; }
+                const tx = db.transaction(STORE_META, 'readwrite');
+                const store = tx.objectStore(STORE_META);
+                const request = store.put({ id: key, value: value, updated: Date.now() });
+                request.onsuccess = () => resolve();
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        function getMetaFromDB(key) {
+            return new Promise((resolve, reject) => {
+                if (!db) { reject('DB not initialized'); return; }
+                const tx = db.transaction(STORE_META, 'readonly');
+                const store = tx.objectStore(STORE_META);
+                const request = store.get(key);
+                request.onsuccess = () => resolve(request.result || null);
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        // ---------- ФОТО ----------
+        function savePhotosToDB(rowId, photos) {
+            return new Promise((resolve, reject) => {
+                if (!db) { reject('DB not initialized'); return; }
+                const tx = db.transaction(STORE_PHOTOS, 'readwrite');
+                const store = tx.objectStore(STORE_PHOTOS);
+                const data = { id: `photos_${rowId}`, rowId: rowId, photos: photos, updated: Date.now() };
+                const request = store.put(data);
+                request.onsuccess = () => resolve();
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        function getPhotosFromDB(rowId) {
+            return new Promise((resolve, reject) => {
+                if (!db) { reject('DB not initialized'); return; }
+                const tx = db.transaction(STORE_PHOTOS, 'readonly');
+                const store = tx.objectStore(STORE_PHOTOS);
+                const request = store.get(`photos_${rowId}`);
+                request.onsuccess = () => {
+                    if (request.result) {
+                        resolve(request.result.photos || []);
+                    } else {
+                        resolve([]);
+                    }
+                };
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        function deletePhotosFromDB(rowId) {
+            return new Promise((resolve, reject) => {
+                if (!db) { reject('DB not initialized'); return; }
+                const tx = db.transaction(STORE_PHOTOS, 'readwrite');
+                const store = tx.objectStore(STORE_PHOTOS);
+                const request = store.delete(`photos_${rowId}`);
+                request.onsuccess = () => resolve();
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        // ---------- ЗАМЕТКИ ----------
+        function saveNoteToDB(rowId, note) {
+            return new Promise((resolve, reject) => {
+                if (!db) { reject('DB not initialized'); return; }
+                const tx = db.transaction(STORE_NOTES, 'readwrite');
+                const store = tx.objectStore(STORE_NOTES);
+                const data = { id: `note_${rowId}`, rowId: rowId, note: note, updated: Date.now() };
+                const request = store.put(data);
+                request.onsuccess = () => resolve();
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        function getNoteFromDB(rowId) {
+            return new Promise((resolve, reject) => {
+                if (!db) { reject('DB not initialized'); return; }
+                const tx = db.transaction(STORE_NOTES, 'readonly');
+                const store = tx.objectStore(STORE_NOTES);
+                const request = store.get(`note_${rowId}`);
+                request.onsuccess = () => {
+                    if (request.result) {
+                        resolve(request.result.note || '');
+                    } else {
+                        resolve('');
+                    }
+                };
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        function deleteNoteFromDB(rowId) {
+            return new Promise((resolve, reject) => {
+                if (!db) { reject('DB not initialized'); return; }
+                const tx = db.transaction(STORE_NOTES, 'readwrite');
+                const store = tx.objectStore(STORE_NOTES);
+                const request = store.delete(`note_${rowId}`);
+                request.onsuccess = () => resolve();
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        // ============================================================
+        //  ВСЕ ФУНКЦИИ
+        // ============================================================
+
+        function parseCoordinates(text) {
+            if (!text || text.trim() === '') return null;
+            const patterns = [
+                /([-+]?\d{1,2}\.\d+)\s*[,;\s]+\s*([-+]?\d{1,3}\.\d+)/,
+                /([-+]?\d{1,2}\.\d+)\s*[°\s]*[NnSs]?\s*[,;\s]*\s*([-+]?\d{1,3}\.\d+)\s*[°\s]*[EeWw]?/,
+            ];
+            for (let pattern of patterns) {
+                const match = text.match(pattern);
+                if (match) {
+                    const lat = parseFloat(match[1]);
+                    const lng = parseFloat(match[2]);
+                    if (!isNaN(lat) && !isNaN(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
+                        return { lat, lng };
+                    }
+                }
+            }
+            return null;
+        }
+
+        // Расстояние между двумя точками по формуле гаверсинуса (км).
+        function getDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371;
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                      Math.sin(dLon/2) * Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
+        }
+
+        // Точка отсчёта расстояния (от неё считалась сортировка) или null.
+        let distanceBasePoint = null;
+        let distanceBaseRowId = null;  // rowId выбранной точки для сортировки
+
+        let rowCounter = 0;
+
+        // ---------- БЕСКОНЕЧНЫЙ СКРОЛЛ (вместо пагинации) ----------
+        const RENDER_CHUNK = 100;    // сколько строк добавлять за раз
+        let renderedCount = 0;       // сколько строк уже отрисовано
+        let currentPage = 1;         // оставлено для совместимости
+        let allData = [];            // полный массив точек (источник истины в памяти)
+        let currentPageRowIds = [];  // rowId всех отрисованных строк
+
+        function generateRowId() { return 'row_' + (++rowCounter) + '_' + Date.now(); }
+
+        // Считать объект точки из DOM-строки
+        function readRowFromDom(tr) {
+            const cb = tr.querySelector('.col-checkbox input[type="checkbox"]');
+            return {
+                rowId: tr.dataset.rowId,
+                name: tr.querySelector('.col-name input')?.value || '',
+                coords: tr.querySelector('.col-coords input')?.value || '',
+                district: tr.querySelector('.col-district input')?.value || '',
+                status: tr.querySelector('.col-status select')?.value || 'урочище',
+                lat: tr.dataset.lat || '',
+                lng: tr.dataset.lng || '',
+                source: tr.dataset.source || '',
+                distance_km: (tr.dataset.distanceKm !== undefined && tr.dataset.distanceKm !== '')
+                    ? parseFloat(tr.dataset.distanceKm) : null,
+                checked: cb ? cb.checked : true
+            };
+        }
+
+        // Перенести правки текущей страницы (и удалённые/добавленные строки)
+        // в полный массив allData НЕ затирая остальные страницы.
+        function syncDomToData() {
+            const rows = Array.from(document.querySelectorAll('#tableBody tr'));
+            const domMap = new Map();
+            rows.forEach(tr => domMap.set(tr.dataset.rowId, readRowFromDom(tr)));
+            const renderedSet = new Set(currentPageRowIds);
+            // удаляем из allData те отрисованные строки, которых больше нет в DOM
+            allData = allData.filter(r => !renderedSet.has(r.rowId) || domMap.has(r.rowId));
+            // обновляем существующие (сливаем с DOM, сохраняя доп. поля вроде архивных)
+            allData = allData.map(r => domMap.has(r.rowId) ? Object.assign({}, r, domMap.get(r.rowId)) : r);
+            // добавляем новые строки, появившиеся в DOM
+            domMap.forEach((val, id) => {
+                if (!allData.some(r => r.rowId === id)) allData.push(val);
+            });
+            currentPageRowIds = rows.map(tr => tr.dataset.rowId);
+        }
+
+        // Подходит ли точка под текущий фильтр (поиск + район)
+        function rowMatchesFilter(row, query, groupFilter) {
+            const name = (row.name || '').toLowerCase();
+            const district = (row.district || '').toLowerCase();
+            const matchSearch = query === '' || name.includes(query) || district.includes(query);
+            let matchGroup = true;
+            if (groupFilter === '__ungrouped__') {
+                matchGroup = (row.district || '').trim() === '';
+            } else if (groupFilter === '__my_points__') {
+                // "Мои точки" = созданные вручную (source='user'),
+                // импортированные (source='imported') и точки без source.
+                const src = (row.source || '').trim().toLowerCase();
+                matchGroup = (src === 'user' || src === 'imported' || src === '');
+            } else if (groupFilter === '__has_church__') {
+                // Церкви по архиву 1859 или по Соборы.ру.
+                matchGroup = (row.has_church === true || row.has_sobory_church === true);
+            } else if (groupFilter === '__sobory__') {
+                // Точки, у которых есть объект из Соборы.ру.
+                matchGroup = !!row.sobory_id;
+            } else if (groupFilter && groupFilter !== '__all__') {
+                matchGroup = district.includes(groupFilter.toLowerCase());
+            }
+            // Фильтр по статусу точки (работает вместе с фильтром районов).
+            if (currentStatusFilter === 'favorite') {
+                if (row.is_favorite !== true) return false;
+            } else if (currentStatusFilter !== '__all__') {
+                const rowStatus = row.status || 'урочище';
+                const isChurch = (rowStatus === 'церковь' || !!row.sobory_id);
+                if (currentStatusFilter === 'церковь') {
+                    if (!isChurch) return false;
+                } else if (currentStatusFilter === 'церковь_действующая') {
+                    if (!isChurch || row.sobory_status !== 'действующая') return false;
+                } else if (currentStatusFilter === 'церковь_недействующая') {
+                    if (!isChurch || row.sobory_status !== 'недействующая') return false;
+                } else if (currentStatusFilter === 'церковь_утраченная') {
+                    if (!isChurch || row.sobory_status !== 'не сохранилась') return false;
+                } else {
+                    if (rowStatus !== currentStatusFilter) return false;
+                }
+            }
+            return matchSearch && matchGroup;
+        }
+
+        function getFilteredData() {
+            const query = (document.getElementById('searchInput')?.value || '').toLowerCase().trim();
+            const groupFilter = document.getElementById('groupFilter')?.value || '__all__';
+            return allData.filter(row => rowMatchesFilter(row, query, groupFilter));
+        }
+
+        function showToast(message, type = 'success') {
+            const existing = document.querySelector('.toast');
+            if (existing) existing.remove();
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // ============================================================
+        //  ИЗБРАННОЕ
+        // ============================================================
+        async function toggleFavorite(rowId) {
+            const row = allData.find(r => r.rowId === rowId);
+            if (!row) return;
+            row.is_favorite = !row.is_favorite;
+            await saveCollectionSilent();
+            const tr = document.querySelector(`#tableBody tr[data-row-id="${rowId}"]`);
+            if (tr) {
+                const star = tr.querySelector('.fav-star');
+                if (star) {
+                    star.textContent = row.is_favorite ? '⭐' : '☆';
+                    star.classList.toggle('active', !!row.is_favorite);
+                }
+            }
+            updateFavCounter();
+            updateStatusFilterCounts();
+            // Если активен фильтр "Избранное" — список мог измениться.
+            if (currentStatusFilter === 'favorite') {
+                renderTablePage(1);
+            }
+            showToast(row.is_favorite ? '⭐ Добавлено в избранное' : 'Убрано из избранного', 'success');
+        }
+        window.toggleFavorite = toggleFavorite;
+
+        function updateFavCounter() {
+            const count = allData.filter(r => r.is_favorite === true).length;
+            const el = document.getElementById('favCounter');
+            if (el) el.textContent = '⭐ ' + count;
+        }
+        window.updateFavCounter = updateFavCounter;
+
+        function toggleFavoriteFromCard() {
+            const btn = document.getElementById('cardFavBtn');
+            if (!btn) return;
+            const rowId = btn.dataset.rowId;
+            if (!rowId) return;
+            toggleFavorite(rowId);
+            const row = allData.find(r => r.rowId === rowId);
+            if (row) {
+                btn.textContent = row.is_favorite ? '⭐ Убрать из избранного' : '☆ Добавить в избранное';
+                btn.style.background = row.is_favorite ? '#f5b301' : '#5e4a32';
+            }
+        }
+        window.toggleFavoriteFromCard = toggleFavoriteFromCard;
+
+        function goHome() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('groupFilter').value = '__all__';
+            const sf = document.getElementById('statusFilter');
+            if (sf) sf.value = '__all__';
+            currentStatusFilter = '__all__';
+            resetDistanceSort();
+            applySearch();
+            showToast('🧭 Все точки показаны', 'success');
+        }
+
+        let currentSearchQuery = '';
+        let currentStatusFilter = '__all__';
+
+        function applyStatusFilter() {
+            currentStatusFilter = document.getElementById('statusFilter').value;
+            currentPage = 1;
+            // Сначала фиксируем правки DOM, затем перерисовываем.
+            return saveCollectionSilent().then(() => renderTablePage(1));
+        }
+
+        // Подписи опций фильтра статуса (без счётчика).
+        const STATUS_FILTER_LABELS = {
+            '__all__': 'Все статусы',
+            'favorite': '⭐ Избранное',
+            'урочище': 'Урочища',
+            'forest': '🌲 Лесные урочища',
+            'церковь': '⛪ Церкви (все)',
+            'церковь_действующая': '⛪ Церкви — действующие',
+            'церковь_недействующая': '⛪ Церкви — недействующие',
+            'церковь_утраченная': '⛪ Церкви — утраченные',
+            'деревня': 'Деревни',
+            'село': 'Сёла',
+            'пустошь': 'Пустоши',
+            'усадьба': 'Усадьбы'
+        };
+
+        // Дописывает количество точек к опциям селекта статуса.
+        // ВАЖНО: каждая точка считается РОВНО ОДИН раз.
+        function updateStatusFilterCounts() {
+            const sel = document.getElementById('statusFilter');
+            if (!sel || !allData || !allData.length) return;
+            const cnt = { '__all__': 0, 'favorite': 0, 'урочище': 0, 'forest': 0, 'церковь': 0,
+                'церковь_действующая': 0, 'церковь_недействующая': 0, 'церковь_утраченная': 0,
+                'деревня': 0, 'село': 0, 'пустошь': 0, 'усадьба': 0 };
+            for (const row of allData) {
+                const st = row.status || 'урочище';
+                const isChurch = (st === 'церковь') || (row.sobory_id != null);
+
+                cnt['__all__']++;
+                if (row.is_favorite) cnt['favorite']++;
+
+                if (st === 'церковь') {
+                    cnt['церковь']++;
+                } else if (st === 'урочище') {
+                    if (row.is_forest) cnt['forest']++;
+                    else cnt['урочище']++;
+                } else if (st === 'деревня') {
+                    cnt['деревня']++;
+                } else if (st === 'село') {
+                    cnt['село']++;
+                } else if (st === 'пустошь') {
+                    cnt['пустошь']++;
+                } else if (st === 'усадьба') {
+                    cnt['усадьба']++;
+                }
+
+                if (isChurch) {
+                    if (st !== 'церковь') cnt['церковь']++;
+                    const sub = row.sobory_status || '';
+                    if (sub === 'действующая') cnt['церковь_действующая']++;
+                    else if (sub === 'недействующая') cnt['церковь_недействующая']++;
+                    else if (sub === 'не сохранилась') cnt['церковь_утраченная']++;
+                }
+            }
+            sel.querySelectorAll('option').forEach(opt => {
+                const base = STATUS_FILTER_LABELS[opt.value];
+                if (base !== undefined) {
+                    opt.textContent = `${base} (${cnt[opt.value] || 0})`;
+                }
+            });
+        }
+
+        function applySearch() {
+            const query = document.getElementById('searchInput').value.toLowerCase().trim();
+            currentSearchQuery = query;
+            // При смене фильтра всегда возвращаемся на первую страницу.
+            currentPage = 1;
+            return saveCollectionSilent().then(() => renderTablePage(1));
+        }
+
+        let searchTimer = null;
+        function applySearchDebounced() {
+            clearTimeout(searchTimer);
+            searchTimer = setTimeout(applySearch, 300);
+        }
+
+        function updateGroupFilter() {
+            const select = document.getElementById('groupFilter');
+            const currentValue = select.value;
+            const districts = new Set();
+            if (allData && allData.length) {
+                // Список районов строим по ВСЕМ точкам, а не только по текущей странице.
+                allData.forEach(r => {
+                    const district = (r.district || '').trim();
+                    if (district) districts.add(district);
+                });
+            } else {
+                const rows = document.querySelectorAll('#tableBody tr');
+                rows.forEach(tr => {
+                    const district = tr.querySelector('.col-district input')?.value?.trim() || '';
+                    if (district) districts.add(district);
+                });
+            }
+            const allOption = select.querySelector('option[value="__all__"]');
+            const ungroupedOption = select.querySelector('option[value="__ungrouped__"]');
+            const myPointsOption = select.querySelector('option[value="__my_points__"]');
+            const districtsKey = Array.from(districts).sort().join('|');
+            if (select.dataset.districtsKey === districtsKey) {
+                return;
+            }
+            select.dataset.districtsKey = districtsKey;
+            select.innerHTML = '';
+            select.appendChild(allOption);
+            select.appendChild(ungroupedOption);
+            if (myPointsOption) select.appendChild(myPointsOption);
+            const sortedDistricts = Array.from(districts).sort();
+            sortedDistricts.forEach(d => {
+                const opt = document.createElement('option');
+                opt.value = d;
+                opt.textContent = d;
+                select.appendChild(opt);
+            });
+            if (Array.from(select.options).some(opt => opt.value === currentValue)) {
+                select.value = currentValue;
+            } else {
+                select.value = '__all__';
+            }
+        }
+
+        let groupFilterTimer = null;
+        function updateGroupFilterDebounced() {
+            clearTimeout(groupFilterTimer);
+            groupFilterTimer = setTimeout(updateGroupFilter, 500);
+        }
+
+        function applyGroupFilter() { applySearch(); }
+
+        // ============================================================
+        //  БЕСКОНЕЧНЫЙ СКРОЛЛ — ОТРИСОВКА СТРОК
+        // ============================================================
+        // Полный сброс и отрисовка первых RENDER_CHUNK строк.
+        function renderTablePage() {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+            currentPageRowIds = [];
+            renderedCount = 0;
+            appendTableChunk();
+            updateSelectionCounter();
+            updateStatusFilterCounts();
+        }
+
+        // Догрузка следующей порции строк (существующие не перерисовываются).
+        function appendTableChunk() {
+            const filtered = getFilteredData();
+            const tbody = document.getElementById('tableBody');
+            const start = renderedCount;
+            const end = Math.min(renderedCount + RENDER_CHUNK, filtered.length);
+            for (let i = start; i < end; i++) {
+                addRowSilentFromData(filtered[i]);
+            }
+            renderedCount = end;
+            currentPageRowIds = Array.from(tbody.querySelectorAll('tr')).map(t => t.dataset.rowId);
+            updateSelectionCounter();
+        }
+
+        // Создаёт tr из объекта данных и добавляет его в tbody (без сохранения).
+        function addRowSilentFromData(row) {
+            const tr = addRowSilent(row.name, row.coords, row.district,
+                                    row.status, '', row.rowId, row.source || '');
+            const favStar = tr.querySelector('.fav-star');
+            if (favStar) {
+                const isFav = row.is_favorite === true;
+                favStar.textContent = isFav ? '⭐' : '☆';
+                favStar.classList.toggle('active', isFav);
+            }
+            if (row.lat !== undefined && row.lat !== '') tr.dataset.lat = row.lat;
+            if (row.lng !== undefined && row.lng !== '') tr.dataset.lng = row.lng;
+            if (row.distance_km !== undefined && row.distance_km !== null && row.distance_km !== '') {
+                const km = Number(row.distance_km);
+                if (!isNaN(km)) {
+                    tr.dataset.distanceKm = String(km);
+                    const kmCell = tr.querySelector('.col-km');
+                    if (kmCell) kmCell.textContent = km.toFixed(2) + ' км';
+                }
+            }
+            const distTd = tr.querySelector('.col-district');
+            if (distTd) {
+                if (row.has_church === true) {
+                    const icon = document.createElement('span');
+                    icon.className = 'archival-icon';
+                    icon.title = 'Церковь по архиву 1859';
+                    icon.textContent = '🏛️';
+                    distTd.appendChild(icon);
+                }
+                if (row.has_sobory_church === true || row.sobory_id) {
+                    const icon = document.createElement('span');
+                    icon.className = 'church-icon';
+                    icon.title = 'Церковь (Соборы.ру)';
+                    icon.textContent = '⛪';
+                    distTd.appendChild(icon);
+                }
+            }
+            const cb = tr.querySelector('.col-checkbox input[type="checkbox"]');
+            if (cb) cb.checked = row.checked !== undefined ? row.checked : true;
+            return tr;
+        }
+
+        function updateSelectionCounter() {
+            const rows = document.querySelectorAll('#tableBody tr');
+            let total = 0, selected = 0;
+            rows.forEach(tr => {
+                if (tr.style.display === 'none') return;
+                total++;
+                const cb = tr.querySelector('.col-checkbox input[type="checkbox"]');
+                if (cb && cb.checked) selected++;
+            });
+            const grandTotal = (allData && allData.length) ? allData.length : total;
+            document.getElementById('selectionCounter').textContent =
+                `Выбрано: ${selected} / ${total} (всего: ${grandTotal})`;
+        }
+
+        function toggleSelectAll() {
+            const rows = document.querySelectorAll('#tableBody tr');
+            const visibleRows = Array.from(rows).filter(tr => tr.style.display !== 'none');
+            const allChecked = visibleRows.every(tr => tr.querySelector('.col-checkbox input[type="checkbox"]')?.checked);
+            visibleRows.forEach(tr => {
+                const cb = tr.querySelector('.col-checkbox input[type="checkbox"]');
+                if (cb) cb.checked = !allChecked;
+            });
+            updateSelectionCounter();
+            saveCollectionSilent();
+        }
+
+        function clearFilter() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('groupFilter').value = '__all__';
+            const sf = document.getElementById('statusFilter');
+            if (sf) sf.value = '__all__';
+            currentStatusFilter = '__all__';
+            resetDistanceSort();
+            applySearch();
+            showToast('🧹 Фильтр очищен', 'success');
+        }
+
+        function openYandexMaps(lat, lng, name = 'Точка') {
+            const url = `https://yandex.ru/maps/?pt=${lng},${lat}&z=15&l=map`;
+            window.open(url, '_blank', 'noopener,noreferrer');
+            showToast(`🌐 Открыто на Яндекс.Картах: ${name}`, 'success');
+        }
+
+        function copyCoords(tr) {
+            const coordsInput = tr.querySelector('.col-coords input');
+            if (coordsInput && coordsInput.value.trim() !== '') {
+                navigator.clipboard.writeText(coordsInput.value.trim()).then(() => {
+                    showToast('✅ Координаты скопированы', 'success');
+                }).catch(() => {
+                    const textarea = document.createElement('textarea');
+                    textarea.value = coordsInput.value.trim();
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textarea);
+                    showToast('✅ Координаты скопированы', 'success');
+                });
+            } else {
+                showToast('❌ Нет координат', 'error');
+            }
+        }
+
+        // ============================================================
+        //  ВЫБОР БАЗОВОЙ ТОЧКИ: поиск + выпадающий список
+        // ============================================================
+        function filterDistanceBase() {
+            const input = document.getElementById('distanceBaseInput');
+            const dropdown = document.getElementById('distanceBaseDropdown');
+            if (!input || !dropdown) return;
+            const query = input.value.toLowerCase().trim();
+
+            // Сбросить выбранную точку, если пользователь изменил текст.
+            distanceBaseRowId = null;
+
+            let points = allData.filter(r => r.name && r.lat && r.lng);
+            if (query) {
+                points = points.filter(r => r.name.toLowerCase().includes(query));
+            }
+            points = points.slice(0, 50);
+            points.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ru'));
+
+            if (points.length === 0) {
+                dropdown.innerHTML = '<div style="padding:10px;color:#7a644a;font-style:italic;text-align:center;">Ничего не найдено</div>';
+            } else {
+                dropdown.innerHTML = points.map(r => {
+                    const district = r.district || 'без района';
+                    return `<div class="distance-base-item" onclick="selectDistanceBase('${r.rowId}')"
+                                style="padding:8px 12px;cursor:pointer;font-family:'Playfair Display',serif;font-size:0.85rem;border-bottom:1px solid #e8dcc9;"
+                                onmouseover="this.style.background='#f0e6d8'"
+                                onmouseout="this.style.background=''">
+                        <div style="color:#2b1a0a;">${escapeXml(r.name)}</div>
+                        <div style="font-size:0.7rem;color:#7a644a;font-style:italic;">${escapeXml(district)}</div>
+                    </div>`;
+                }).join('');
+            }
+            dropdown.style.display = 'block';
+        }
+        window.filterDistanceBase = filterDistanceBase;
+
+        function selectDistanceBase(rowId) {
+            const row = allData.find(r => r.rowId === rowId);
+            if (!row) return;
+            distanceBaseRowId = rowId;
+            document.getElementById('distanceBaseInput').value = row.name;
+            document.getElementById('distanceBaseDropdown').style.display = 'none';
+        }
+        window.selectDistanceBase = selectDistanceBase;
+
+        // Скрытие дропдауна при клике вне поля/списка.
+        document.addEventListener('click', function(e) {
+            const dropdown = document.getElementById('distanceBaseDropdown');
+            const input = document.getElementById('distanceBaseInput');
+            if (dropdown && input && !input.contains(e.target) && !dropdown.contains(e.target)) {
+                dropdown.style.display = 'none';
+            }
+        });
+
+        function sortByDistance() {
+            if (!distanceBaseRowId) {
+                showToast('❌ Выберите точку из списка', 'error');
+                return;
+            }
+            const row = allData.find(r => r.rowId === distanceBaseRowId);
+            if (!row || !row.lat || !row.lng) {
+                showToast('❌ У выбранной точки нет координат', 'error');
+                return;
+            }
+            sortByCoords(row.lat, row.lng, row.name);
+        }
+        window.sortByDistance = sortByDistance;
+
+        // Сортировка всего массива allData по расстоянию от произвольных координат.
+        function sortByCoords(baseLat, baseLng, label) {
+            if (!allData || allData.length === 0) {
+                showToast('❌ Нет данных для сортировки', 'error');
+                return;
+            }
+
+            distanceBasePoint = { lat: baseLat, lng: baseLng, label: label };
+
+            allData.forEach(row => {
+                const coords = parseCoordinates(row.coords);
+                if (coords) {
+                    row.distance_km = getDistance(baseLat, baseLng, coords.lat, coords.lng);
+                } else {
+                    row.distance_km = null;
+                }
+            });
+
+            allData.sort((a, b) => {
+                const da = (a.distance_km === null || a.distance_km === undefined) ? Infinity : a.distance_km;
+                const db = (b.distance_km === null || b.distance_km === undefined) ? Infinity : b.distance_km;
+                return da - db;
+            });
+
+            renderTablePage(1);
+            saveCollectionSilent();
+            showToast(`📏 Отсортировано от: ${label} (${allData.length} точек)`, 'success');
+        }
+
+        // Определить текущее местоположение и отсортировать по нему.
+        function sortByMyLocation() {
+            if (!navigator.geolocation) {
+                showToast('❌ Геолокация не поддерживается браузером', 'error');
+                return;
+            }
+            showToast('⏳ Определяю местоположение...', 'info');
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    sortByCoords(lat, lng, 'Моё местоположение');
+                },
+                (error) => {
+                    showToast('❌ Не удалось определить местоположение: ' + error.message, 'error');
+                },
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+            );
+        }
+
+        // Открыть модальное окно ручного ввода координат.
+        function openCoordsInput() {
+            const modal = document.getElementById('coordsModal');
+            const input = document.getElementById('coordsModalInput');
+            if (!modal || !input) return;
+            input.value = '';
+            modal.classList.add('active');
+            setTimeout(() => input.focus(), 50);
+        }
+
+        function closeCoordsInput() {
+            const modal = document.getElementById('coordsModal');
+            if (modal) modal.classList.remove('active');
+        }
+
+        function submitCoordsInput() {
+            const input = document.getElementById('coordsModalInput');
+            const coords = parseCoordinates(input ? input.value : '');
+            if (!coords) {
+                showToast('❌ Некорректные координаты. Формат: 53.123, 36.456', 'error');
+                return;
+            }
+            closeCoordsInput();
+            sortByCoords(coords.lat, coords.lng, 'Введённые координаты');
+        }
+
+        // Числовой id точки (для восстановления исходного порядка).
+        function rowNumericId(row) {
+            const m = /^pwa_(\d+)$/.exec(row.rowId || '');
+            return m ? parseInt(m[1], 10) : Infinity;
+        }
+
+        // Сброс сортировки по расстоянию: чистим distance_km и возвращаем порядок по id.
+        function resetDistanceSort() {
+            distanceBasePoint = null;
+            distanceBaseRowId = null;
+            document.getElementById('distanceBaseInput') && (document.getElementById('distanceBaseInput').value = '');
+            if (!allData || allData.length === 0) return;
+            allData.forEach(row => { row.distance_km = null; });
+            allData.sort((a, b) => {
+                const ia = rowNumericId(a);
+                const ib = rowNumericId(b);
+                if (ia !== ib) return ia - ib;
+                return (a.rowId || '').localeCompare(b.rowId || '');
+            });
+            // Чистим отрисованные строки, чтобы syncDomToData не вернул старые КМ.
+            document.querySelectorAll('#tableBody tr').forEach(tr => {
+                delete tr.dataset.distanceKm;
+                const kmCell = tr.querySelector('.col-km');
+                if (kmCell) kmCell.textContent = '';
+            });
+        }
+
+        function toggleImportExport() {
+            const panel = document.getElementById('importExportPanel');
+            if (panel.style.display === 'none' || panel.style.display === '') {
+                panel.style.display = 'block';
+            } else {
+                panel.style.display = 'none';
+            }
+        }
+
+        // ============================================================
+        //  ПОЛНЫЙ БЭКАП ВСЕЙ БАЗЫ В JSON
+        // ============================================================
+        const BACKUP_FORMAT_VERSION = 1;
+
+        async function exportFullBackup() {
+            try {
+                showToast('⏳ Собираю бэкап...', 'info');
+
+                // 1. Точки из коллекции
+                const collection = await loadCollectionFromDB() || [];
+
+                // 2. Заметки и фото по каждой точке
+                const notes = {};
+                const photos = {};
+
+                for (const row of collection) {
+                    const rowId = row.rowId;
+                    try {
+                        notes[rowId] = await getNoteFromDB(rowId) || '';
+                    } catch (e) { notes[rowId] = ''; }
+                    try {
+                        photos[rowId] = await getPhotosFromDB(rowId) || [];
+                    } catch (e) { photos[rowId] = []; }
+                }
+
+                const backup = {
+                    format: 'KladFinderBackup',
+                    version: BACKUP_FORMAT_VERSION,
+                    exported: new Date().toISOString(),
+                    collection: collection,
+                    notes: notes,
+                    photos: photos
+                };
+
+                const json = JSON.stringify(backup, null, 2);
+                const blob = new Blob([json], { type: 'application/json;charset=utf-8' });
+                const link = document.createElement('a');
+                const dateStr = new Date().toISOString().slice(0, 10);
+                link.href = URL.createObjectURL(blob);
+                link.download = `backup_klad_${dateStr}.json`;
+                link.click();
+                URL.revokeObjectURL(link.href);
+
+                const pointsCount = collection.length;
+                const photosCount = Object.values(photos).reduce((s, arr) => s + arr.length, 0);
+                showToast(`💾 Бэкап готов: ${pointsCount} точек, ${photosCount} фото`, 'success');
+            } catch (e) {
+                console.error('Backup export error:', e);
+                showToast('❌ Ошибка бэкапа: ' + e.message, 'error');
+            }
+        }
+
+        async function importFullBackup(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            let backup;
+            try {
+                const text = await file.text();
+                backup = JSON.parse(text);
+            } catch (e) {
+                showToast('❌ Файл не является корректным JSON', 'error');
+                event.target.value = '';
+                return;
+            }
+
+            // Проверка формата
+            if (!backup || backup.format !== 'KladFinderBackup') {
+                showToast('❌ Это не файл бэкапа КабинетаЪ кладоискателя', 'error');
+                event.target.value = '';
+                return;
+            }
+            if (typeof backup.version !== 'number' || backup.version > BACKUP_FORMAT_VERSION) {
+                showToast('❌ Версия бэкапа новее, чем понимает эта страница. Обнови страницу.', 'error');
+                event.target.value = '';
+                return;
+            }
+            if (!Array.isArray(backup.collection)) {
+                showToast('❌ В бэкапе нет списка точек', 'error');
+                event.target.value = '';
+                return;
+            }
+
+            const pointsCount = backup.collection.length;
+            const photosCount = Object.values(backup.photos || {}).reduce((s, arr) => s + (arr?.length || 0), 0);
+
+            const confirmed = confirm(
+                `Восстановить бэкап?\n\n` +
+                `Точек в файле: ${pointsCount}\n` +
+                `Фото в файле: ${photosCount}\n\n` +
+                `⚠️ ВСЕ ТЕКУЩИЕ ТОЧКИ, СПРАВКИ И ФОТО БУДУТ ЗАМЕНЕНЫ.\n\n` +
+                `Продолжить?`
+            );
+            if (!confirmed) {
+                event.target.value = '';
+                return;
+            }
+
+            try {
+                showToast('⏳ Восстанавливаю...', 'info');
+
+                // 1. Очищаем текущие хранилища
+                await clearAllStores();
+
+                // 2. Сохраняем коллекцию
+                await saveCollectionToDB(backup.collection);
+
+                // 3. Сохраняем заметки
+                const notes = backup.notes || {};
+                for (const rowId of Object.keys(notes)) {
+                    const note = notes[rowId];
+                    if (note && note.trim() !== '') {
+                        await saveNoteToDB(rowId, note);
+                    }
+                }
+
+                // 4. Сохраняем фото
+                const photos = backup.photos || {};
+                for (const rowId of Object.keys(photos)) {
+                    const arr = photos[rowId];
+                    if (Array.isArray(arr) && arr.length > 0) {
+                        await savePhotosToDB(rowId, arr);
+                    }
+                }
+
+                // 5. Перерисовываем таблицу
+                await reloadTableFromDB();
+
+                showToast(`✅ Восстановлено: ${pointsCount} точек, ${photosCount} фото`, 'success');
+            } catch (e) {
+                console.error('Backup import error:', e);
+                showToast('❌ Ошибка восстановления: ' + e.message, 'error');
+            }
+
+            event.target.value = '';
+        }
+
+        // Очистить все три хранилища IndexedDB
+        function clearAllStores() {
+            return new Promise((resolve, reject) => {
+                if (!db) { reject(new Error('DB not initialized')); return; }
+                const tx = db.transaction([STORE_PHOTOS, STORE_NOTES, STORE_COLLECTION], 'readwrite');
+                tx.objectStore(STORE_PHOTOS).clear();
+                tx.objectStore(STORE_NOTES).clear();
+                tx.objectStore(STORE_COLLECTION).clear();
+                tx.oncomplete = () => resolve();
+                tx.onerror = () => reject(tx.error);
+            });
+        }
+
+        // Полностью перерисовать таблицу из БД (без старых данных)
+        async function reloadTableFromDB() {
+            const data = await loadCollectionFromDB() || [];
+            // Старые строки больше не валидны — чистим DOM до подмены allData.
+            document.getElementById('tableBody').innerHTML = '';
+            currentPageRowIds = [];
+            allData = data;
+
+            currentPage = 1;
+            updateGroupFilter();
+            renderTablePage(1);
+        }
+
+        function exportCSV() {
+            const rows = getSelectedRows();
+            if (rows.length === 0) { showToast('Нет выбранных точек', 'error'); return; }
+
+            let csv = 'Название;Координаты;Район;Статус;Справка\n';
+            const promises = rows.map(async (tr) => {
+                const name = tr.querySelector('.col-name input')?.value || '';
+                const coords = tr.querySelector('.col-coords input')?.value || '';
+                const district = tr.querySelector('.col-district input')?.value || '';
+                const status = tr.querySelector('.col-status select')?.value || '';
+                const note = await getNoteFromDB(tr.dataset.rowId) || '';
+                return `"${name}";"${coords}";"${district}";"${status}";"${note}"\n`;
+            });
+
+            Promise.all(promises).then(lines => {
+                csv += lines.join('');
+                const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `каталог_точек_${new Date().toISOString().slice(0,10)}.csv`;
+                link.click();
+                URL.revokeObjectURL(link.href);
+                showToast(`✅ CSV (${rows.length} точек)`, 'success');
+            });
+        }
+
+        // ============================================================
+        //  ГЛАВНАЯ ФУНКЦИЯ СОХРАНЕНИЯ (В INDEXEDDB)
+        // ============================================================
+        // Принудительное сохранение. Из UI больше не вызывается (автосохранение
+        // делает saveCollectionSilent), но функция оставлена для ручного вызова.
+        async function forceSaveAll() {
+            updateSaveStatus('saving', '⏳ Сохранение...');
+            try {
+                // Переносим правки текущей страницы в полный массив и сохраняем ВСЁ.
+                syncDomToData();
+
+                // Сохраняем в IndexedDB
+                await saveCollectionToDB(allData);
+
+                // Сохраняем заметки из открытой карточки
+                if (currentCardRowId) {
+                    const note = document.getElementById('cardNote').value;
+                    if (note) {
+                        await saveNoteToDB(currentCardRowId, note);
+                    }
+                }
+
+                const time = new Date().toTimeString().slice(0, 5);
+                updateSaveStatus('', '✅ Сохранено ' + time);
+                showToast(`💾 Сохранено ${allData.length} точек в IndexedDB!`, 'success');
+                return true;
+            } catch (e) {
+                console.error('Ошибка сохранения:', e);
+                updateSaveStatus('error', '❌ Ошибка сохранения');
+                showToast('❌ Ошибка сохранения: ' + e.message, 'error');
+                return false;
+            }
+        }
+
+        // ============================================================
+        //  ЗАГРУЗКА ДАННЫХ ИЗ INDEXEDDB
+        // ============================================================
+        async function loadCollection() {
+            try {
+                const data = await loadCollectionFromDB();
+                if (!data || data.length === 0) {
+                    console.log('Нет сохранённых данных');
+                    return false;
+                }
+                console.log('Загружаем ' + data.length + ' точек из IndexedDB');
+
+                // Чистим старый DOM до подмены данных, затем рисуем первую страницу.
+                document.getElementById('tableBody').innerHTML = '';
+                currentPageRowIds = [];
+                allData = data;
+                currentPage = 1;
+
+                updateGroupFilter();
+                renderTablePage(1);
+                updateFavCounter();
+
+                showToast('📂 Загружено ' + data.length + ' точек из IndexedDB', 'success');
+                return true;
+            } catch (e) {
+                console.error('Ошибка загрузки коллекции:', e);
+                return false;
+            }
+        }
+
+        // Сохранение "на лету" (тихое).
+        // ВАЖНО: сначала переносим правки текущей страницы в полный массив
+        // allData (чтобы не потерять остальные страницы), затем сохраняем всё.
+        // Индикатор автосохранения. Debounce 200 мс, чтобы при частых
+        // изменениях статус не мигал: показываем только итоговое состояние.
+        let saveStatusTimer = null;
+        function updateSaveStatus(state, text) {
+            const el = document.getElementById('saveStatus');
+            if (!el) return;
+            clearTimeout(saveStatusTimer);
+            saveStatusTimer = setTimeout(() => {
+                el.className = 'save-status' + (state ? ' ' + state : '');
+                el.textContent = text || '✅ Все изменения сохранены';
+            }, 200);
+        }
+        window.updateSaveStatus = updateSaveStatus;
+
+        async function saveCollectionSilent() {
+            updateSaveStatus('saving', '⏳ Сохранение...');
+            try {
+                syncDomToData();
+                await saveCollectionToDB(allData);
+                const time = new Date().toTimeString().slice(0, 5);
+                updateSaveStatus('', '✅ Сохранено ' + time);
+                return true;
+            } catch (e) {
+                console.error('Silent save error:', e);
+                updateSaveStatus('error', '❌ Ошибка сохранения');
+                return false;
+            }
+        }
+
+        let saveTimer = null;
+        function scheduleSave() {
+            clearTimeout(saveTimer);
+            saveTimer = setTimeout(saveCollectionSilent, 1500);
+        }
+
+        // ============================================================
+        //  БАЗА УРОЧИЩ: /data/urochisha.json -> IndexedDB
+        // ============================================================
+        const DEMO_NAMES = ['Олонино', 'Бушнево', 'Прудки'];
+
+        function isDemoRow(r) {
+            return DEMO_NAMES.includes((r.name || '').trim()) &&
+                   !(r.rowId || '').startsWith('pwa_') && !r.source;
+        }
+
+        function clearStore(storeName) {
+            return new Promise((resolve) => {
+                if (!db) { resolve(); return; }
+                const tx = db.transaction(storeName, 'readwrite');
+                tx.objectStore(storeName).clear();
+                tx.oncomplete = () => resolve();
+                tx.onerror = () => resolve();
+            });
+        }
+
+        function saveNotesBulk(entries) {
+            return new Promise((resolve) => {
+                if (!db || entries.length === 0) { resolve(); return; }
+                const tx = db.transaction(STORE_NOTES, 'readwrite');
+                const store = tx.objectStore(STORE_NOTES);
+                entries.forEach(([rowId, note]) => {
+                    store.put({ id: `note_${rowId}`, rowId: rowId,
+                                note: note, updated: Date.now() });
+                });
+                tx.oncomplete = () => resolve();
+                tx.onerror = () => resolve();
+            });
+        }
+
+        // Возвращает set rowId, для которых в STORE_NOTES уже есть запись
+        // (пользовательские заметки/правки, которые нельзя затирать).
+        function getNoteRowIds() {
+            return new Promise((resolve) => {
+                if (!db) { resolve(new Set()); return; }
+                const tx = db.transaction(STORE_NOTES, 'readonly');
+                const request = tx.objectStore(STORE_NOTES).getAll();
+                request.onsuccess = () => {
+                    resolve(new Set((request.result || []).map(r => r.rowId)));
+                };
+                request.onerror = () => resolve(new Set());
+            });
+        }
+
+        // Формирует allData, сохраняет в IndexedDB и рисует первую страницу.
+        // Заметки и фото — пользовательские данные, их НЕ очищаем.
+        async function renderUrochishaBase(items) {
+            const existingNotes = await getNoteRowIds();
+            // Сохраняем уже проставленные избранные, чтобы не потерять их
+            // при обновлении базы урочищ.
+            const existingCollection = await loadCollectionFromDB() || [];
+            const favMap = new Map(existingCollection.map(r => [r.rowId, r.is_favorite === true]));
+
+            const notes = [];
+            const newData = [];
+            items.forEach(it => {
+                const rowId = 'pwa_' + it.id;
+                const rec = {
+                    rowId: rowId,
+                    name: it.name || '',
+                    coords: it.coords || '',
+                    district: it.district || '',
+                    status: it.status || 'урочище',
+                    lat: (it.lat !== undefined && it.lat !== null) ? it.lat : '',
+                    lng: (it.lng !== undefined && it.lng !== null) ? it.lng : '',
+                    source: it.source || '',
+                    checked: it.checked !== undefined ? it.checked : true,
+                    is_favorite: favMap.get(rowId) === true
+                };
+                // Архивные данные 1859 (если есть) переносим в рабочую запись.
+                if (it.archival_name) {
+                    rec.archival_name = it.archival_name;
+                    rec.archival_list_number = it.archival_list_number;
+                    rec.dvorov_1859 = it.dvorov_1859;
+                    rec.muzhchin_1859 = it.muzhchin_1859;
+                    rec.zhenshchin_1859 = it.zhenshchin_1859;
+                    rec.church_1859 = it.church_1859;
+                    rec.has_church = it.has_church;
+                    rec.match_score = it.match_score;
+                }
+                // Данные Соборы.ру (если есть)
+                if (it.sobory_id) {
+                    rec.sobory_name = it.sobory_name;
+                    rec.sobory_year = it.sobory_year;
+                    rec.sobory_status = it.sobory_status;
+                    rec.sobory_id = it.sobory_id;
+                    rec.has_sobory_church = true;
+                    if (it.sobory_match_score !== undefined) rec.sobory_match_score = it.sobory_match_score;
+                }
+                newData.push(rec);
+                // Заметку из базы пишем только если для этой точки ещё нет своей.
+                if (it.note && !existingNotes.has(rowId)) notes.push([rowId, it.note]);
+            });
+
+            // Чистим старый DOM до подмены данных.
+            document.getElementById('tableBody').innerHTML = '';
+            currentPageRowIds = [];
+            allData = newData;
+            currentPage = 1;
+
+            await saveNotesBulk(notes);
+            await saveCollectionToDB(allData);
+            updateGroupFilter();
+            renderTablePage(1);
+            updateFavCounter();
+            return items.length;
+        }
+
+        // options.auto = true -> без подтверждения (стартовое заполнение).
+        async function importUrochishaBase(options = {}) {
+            const auto = !!options.auto;
+            try {
+                // ВСЕГДА запрашиваем свежий файл, чтобы узнать его версию.
+                let resp;
+                try {
+                    resp = await fetch('/data/urochisha.json', { cache: 'no-store' });
+                } catch (netErr) {
+                    // Оффлайн: работаем на том, что уже лежит в IndexedDB.
+                    console.warn('[PWA] База недоступна (оффлайн):', netErr);
+                    if (auto) { await loadCollection(); return false; }
+                    throw netErr;
+                }
+                if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                const data = await resp.json();
+                const items = Array.isArray(data) ? data : (data.items || []);
+                if (!items.length) throw new Error('Файл пуст');
+
+                const fileVersion = data.updated || '';
+                const existing = await loadCollectionFromDB() || [];
+                const hasBase = existing.some(r => (r.rowId || '').startsWith('pwa_'));
+
+                // Автозагрузка: если версия файла совпадает и данные уже есть —
+                // ничего не трогаем, чтобы не затереть правки пользователя.
+                if (auto && hasBase) {
+                    const saved = await getMetaFromDB('urochisha_version');
+                    const savedVersion = saved ? saved.value : null;
+                    if (savedVersion === fileVersion) {
+                        await loadCollection();
+                        return false;
+                    }
+                }
+
+                if (hasBase && !auto) {
+                    if (!confirm('База урочищ уже загружена. Перезаписать текущие данные?')) {
+                        return false;
+                    }
+                }
+
+                showToast('⏳ Загрузка базы урочищ...', 'info');
+                const n = await renderUrochishaBase(items);
+                await saveMetaToDB('urochisha_version', fileVersion);
+                showToast(`🌲 Загружено ${n} урочищ`, 'success');
+                return true;
+            } catch (e) {
+                console.error('[PWA] Ошибка загрузки базы урочищ:', e);
+                showToast('❌ Не удалось загрузить базу: ' + e.message, 'error');
+                return false;
+            }
+        }
+
+        // ============================================================
+        //  ЗАГРУЗКА CSV
+        // ============================================================
+        function loadCSV(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            showToast('⏳ Загрузка CSV...', 'info');
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const text = e.target.result;
+                    const lines = text.split('\n').filter(line => line.trim() !== '');
+                    
+                    if (lines.length < 2) { 
+                        showToast('❌ CSV пуст', 'error'); 
+                        return; 
+                    }
+
+                    const delimiter = lines[0].includes(';') ? ';' : ',';
+                    let added = 0;
+                    const notePromises = [];
+                    
+                    for (let i = 1; i < lines.length; i++) {
+                        const values = lines[i].split(delimiter).map(v => v.replace(/^"|"$/g, '').trim());
+                        if (values.length < 2) continue;
+
+                        const name = values[0] || `Точка ${i}`;
+                        const coords = values[1] || '';
+                        const district = values[2] || '';
+                        const status = values[3] || 'урочище';
+                        const note = values[4] || '';
+
+                        const tr = addRowSilent(name, coords, district, status, '', null, 'imported');
+                        if (note) {
+                            notePromises.push(saveNoteToDB(tr.dataset.rowId, note));
+                        }
+                        added++;
+                    }
+                    
+                    Promise.all(notePromises).then(() => {
+                        saveCollectionSilent();
+                        applySearch();
+                        updateGroupFilter();
+                        updateSelectionCounter();
+                        showToast(`✅ Импортировано ${added} точек! Нажмите "Сохранить"`, 'success');
+                    }).catch(() => {
+                        saveCollectionSilent();
+                        applySearch();
+                        updateGroupFilter();
+                        updateSelectionCounter();
+                        showToast(`✅ Импортировано ${added} точек! Нажмите "Сохранить"`, 'success');
+                    });
+                    
+                } catch (err) {
+                    showToast('❌ Ошибка импорта CSV: ' + err.message, 'error');
+                }
+            };
+            
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        function loadExcel(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            showToast('ℹ️ Сохраните файл Excel как CSV и загрузите через "Загрузить CSV"', 'info');
+            if (confirm('Хотите скачать шаблон CSV для заполнения?')) {
+                const template = 'Название;Координаты;Район;Статус;Справка\n"Новая точка";"55.123, 35.456";"Район";"урочище";"Описание"';
+                const blob = new Blob(['\uFEFF' + template], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `шаблон_каталога.csv`;
+                link.click();
+                URL.revokeObjectURL(link.href);
+            }
+            event.target.value = '';
+        }
+
+        function addRow(name = '', coords = '', district = '', status = 'урочище', note = '') {
+            const tr = document.createElement('tr');
+            const rowId = generateRowId();
+            tr.dataset.rowId = rowId;
+            const statuses = ['урочище', 'деревня', 'село', 'пустошь', 'усадьба', 'церковь'];
+
+            const tdFav = document.createElement('td');
+            tdFav.className = 'col-fav';
+            tdFav.style.textAlign = 'center';
+            const favStar = document.createElement('span');
+            favStar.className = 'fav-star';
+            favStar.textContent = '☆';
+            favStar.title = 'В избранное';
+            favStar.onclick = function() { toggleFavorite(rowId); };
+            tdFav.appendChild(favStar);
+            tr.appendChild(tdFav);
+
+            const tdCheck = document.createElement('td');
+            tdCheck.className = 'col-checkbox';
+            const check = document.createElement('input');
+            check.type = 'checkbox';
+            check.checked = true;
+            tdCheck.appendChild(check);
+            tr.appendChild(tdCheck);
+
+            const fields = [
+                { cls: 'col-name', tag: 'input', val: name, placeholder: 'Название' },
+                { cls: 'col-coords', tag: 'input', val: coords, placeholder: '55.123, 35.456' },
+                { cls: 'col-district', tag: 'input', val: district, placeholder: 'Район' },
+                { cls: 'col-status', tag: 'select', val: status, options: statuses },
+            ];
+
+            fields.forEach(f => {
+                const td = document.createElement('td');
+                td.className = f.cls;
+                let el;
+                if (f.tag === 'select') {
+                    el = document.createElement('select');
+                    f.options.forEach(opt => {
+                        const option = document.createElement('option');
+                        option.value = opt;
+                        option.textContent = opt.charAt(0).toUpperCase() + opt.slice(1);
+                        if (opt === f.val) option.selected = true;
+                        el.appendChild(option);
+                    });
+                } else {
+                    el = document.createElement('input');
+                    el.type = 'text';
+                    el.value = f.val;
+                    el.placeholder = f.placeholder;
+                }
+                td.appendChild(el);
+                tr.appendChild(td);
+            });
+
+            const tdKm = document.createElement('td');
+            tdKm.className = 'col-km';
+            tdKm.textContent = '';
+            tdKm.style.fontWeight = '600';
+            tdKm.style.color = '#1a5a7a';
+            tr.appendChild(tdKm);
+
+            const tdCard = document.createElement('td');
+            const cardBtn = document.createElement('span');
+            cardBtn.textContent = '📝';
+            cardBtn.style.cursor = 'pointer';
+            cardBtn.style.fontSize = '1.1rem';
+            cardBtn.title = 'Открыть карточку точки';
+            cardBtn.onclick = function() { openCard(rowId); };
+            tdCard.appendChild(cardBtn);
+            tr.appendChild(tdCard);
+
+            const tdMap = document.createElement('td');
+            const mapLink = document.createElement('span');
+            mapLink.className = 'location-link';
+            mapLink.textContent = '📍';
+            const coordsInput = tr.querySelector('.col-coords input');
+            const nameInput = tr.querySelector('.col-name input');
+            mapLink.onclick = function() {
+                const coords = parseCoordinates(coordsInput.value);
+                if (coords) {
+                    openMap(coords.lat, coords.lng, nameInput.value || 'Точка', rowId);
+                } else {
+                    showToast('Введите координаты в формате 55.123, 35.456');
+                }
+            };
+            tdMap.appendChild(mapLink);
+            tr.appendChild(tdMap);
+
+            const tdDel = document.createElement('td');
+            const delBtn = document.createElement('button');
+            delBtn.className = 'btn-delete';
+            delBtn.textContent = '✕';
+            delBtn.onclick = function() {
+                if (confirm('Удалить точку?')) {
+                    deleteNoteFromDB(rowId);
+                    deletePhotosFromDB(rowId);
+                    tr.remove();
+                    saveCollectionSilent();
+                    showToast('🗑️ Удалено');
+                    applySearch();
+                    updateGroupFilter();
+                    updateSelectionCounter();
+                }
+            };
+            tdDel.appendChild(delBtn);
+            tr.appendChild(tdDel);
+
+            tr.querySelectorAll('input, select').forEach(el => {
+                el.addEventListener('change', () => {
+                    scheduleSave();
+                    applySearchDebounced();
+                    updateGroupFilterDebounced();
+                    updateSelectionCounter();
+                });
+            });
+
+            check.addEventListener('change', () => {
+                updateSelectionCounter();
+                saveCollectionSilent();
+            });
+
+            // Точка создана пользователем вручную.
+            tr.dataset.source = 'user';
+
+            // Новая точка — В НАЧАЛО allData (источник истины для рендера).
+            allData.unshift(readRowFromDom(tr));
+
+            if (note && note.trim() !== '') {
+                saveNoteToDB(rowId, note.trim());
+            }
+
+            // Сбрасываем ВСЕ фильтры, чтобы новая строка гарантированно
+            // была видна сверху, даже если ранее был выбран статус/район/поиск.
+            const sf = document.getElementById('statusFilter');
+            if (sf) sf.value = '__all__';
+            const gf = document.getElementById('groupFilter');
+            if (gf) gf.value = '__all__';
+            const si = document.getElementById('searchInput');
+            if (si) si.value = '';
+            currentStatusFilter = '__all__';
+            currentSearchQuery = '';
+            currentPage = 1;
+
+            // Фиксируем и перерисовываем первую страницу из allData.
+            saveCollectionSilent();
+            renderTablePage(1);
+
+            // Прокрутка к новой строке, подсветка и фокус на поле "Название".
+            scrollToRow(rowId, true);
+
+            updateGroupFilter();
+            updateSelectionCounter();
+            return tr;
+        }
+
+        // Прокрутить таблицу к строке, подсветить на 2 секунды.
+        // focus=true — поставить курсор в поле "Название".
+        function scrollToRow(rowId, focus = false) {
+            const tr = document.querySelector(`#tableBody tr[data-row-id="${rowId}"]`);
+            if (!tr) return;
+            tr.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            tr.style.transition = 'background-color 0.4s ease';
+            tr.style.backgroundColor = '#fff8dc';
+            setTimeout(() => { tr.style.backgroundColor = ''; }, 2000);
+            if (focus) {
+                const nameInput = tr.querySelector('.col-name input');
+                if (nameInput) {
+                    try { nameInput.focus({ preventScroll: true }); }
+                    catch (e) { nameInput.focus(); }
+                }
+            }
+        }
+
+        function addRowSilent(name = '', coords = '', district = '', status = 'урочище', note = '', initRowId = null, source = '') {
+            const tbody = document.getElementById('tableBody');
+            const tr = document.createElement('tr');
+            const rowId = initRowId || generateRowId();
+            tr.dataset.rowId = rowId;
+            if (source) tr.dataset.source = source;
+            const statuses = ['урочище', 'деревня', 'село', 'пустошь', 'усадьба', 'церковь'];
+
+            const tdFav = document.createElement('td');
+            tdFav.className = 'col-fav';
+            tdFav.style.textAlign = 'center';
+            const favStar = document.createElement('span');
+            favStar.className = 'fav-star';
+            favStar.textContent = '☆';
+            favStar.title = 'В избранное';
+            favStar.onclick = function() { toggleFavorite(rowId); };
+            tdFav.appendChild(favStar);
+            tr.appendChild(tdFav);
+
+            const tdCheck = document.createElement('td');
+            tdCheck.className = 'col-checkbox';
+            const check = document.createElement('input');
+            check.type = 'checkbox';
+            check.checked = true;
+            tdCheck.appendChild(check);
+            tr.appendChild(tdCheck);
+
+            const fields = [
+                { cls: 'col-name', tag: 'input', val: name, placeholder: 'Название' },
+                { cls: 'col-coords', tag: 'input', val: coords, placeholder: '55.123, 35.456' },
+                { cls: 'col-district', tag: 'input', val: district, placeholder: 'Район' },
+                { cls: 'col-status', tag: 'select', val: status, options: statuses },
+            ];
+
+            fields.forEach(f => {
+                const td = document.createElement('td');
+                td.className = f.cls;
+                let el;
+                if (f.tag === 'select') {
+                    el = document.createElement('select');
+                    f.options.forEach(opt => {
+                        const option = document.createElement('option');
+                        option.value = opt;
+                        option.textContent = opt.charAt(0).toUpperCase() + opt.slice(1);
+                        if (opt === f.val) option.selected = true;
+                        el.appendChild(option);
+                    });
+                } else {
+                    el = document.createElement('input');
+                    el.type = 'text';
+                    el.value = f.val;
+                    el.placeholder = f.placeholder;
+                }
+                td.appendChild(el);
+                tr.appendChild(td);
+            });
+
+            const tdKm = document.createElement('td');
+            tdKm.className = 'col-km';
+            tdKm.textContent = '';
+            tdKm.style.fontWeight = '600';
+            tdKm.style.color = '#1a5a7a';
+            tr.appendChild(tdKm);
+
+            const tdCard = document.createElement('td');
+            const cardBtn = document.createElement('span');
+            cardBtn.textContent = '📝';
+            cardBtn.style.cursor = 'pointer';
+            cardBtn.style.fontSize = '1.1rem';
+            cardBtn.title = 'Открыть карточку точки';
+            cardBtn.onclick = function() { openCard(rowId); };
+            tdCard.appendChild(cardBtn);
+            tr.appendChild(tdCard);
+
+            const tdMap = document.createElement('td');
+            const mapLink = document.createElement('span');
+            mapLink.className = 'location-link';
+            mapLink.textContent = '📍';
+            const coordsInput = tr.querySelector('.col-coords input');
+            const nameInput = tr.querySelector('.col-name input');
+            mapLink.onclick = function() {
+                const coords = parseCoordinates(coordsInput.value);
+                if (coords) {
+                    openMap(coords.lat, coords.lng, nameInput.value || 'Точка', rowId);
+                } else {
+                    showToast('Введите координаты в формате 55.123, 35.456');
+                }
+            };
+            tdMap.appendChild(mapLink);
+            tr.appendChild(tdMap);
+
+            const tdDel = document.createElement('td');
+            const delBtn = document.createElement('button');
+            delBtn.className = 'btn-delete';
+            delBtn.textContent = '✕';
+            delBtn.onclick = function() {
+                if (confirm('Удалить точку?')) {
+                    deleteNoteFromDB(rowId);
+                    deletePhotosFromDB(rowId);
+                    tr.remove();
+                    saveCollectionSilent();
+                    showToast('🗑️ Удалено');
+                    applySearch();
+                    updateGroupFilter();
+                    updateSelectionCounter();
+                }
+            };
+            tdDel.appendChild(delBtn);
+            tr.appendChild(tdDel);
+
+            tr.querySelectorAll('input, select').forEach(el => {
+                el.addEventListener('change', () => {
+                    scheduleSave();
+                    applySearchDebounced();
+                    updateGroupFilterDebounced();
+                    updateSelectionCounter();
+                });
+            });
+
+            check.addEventListener('change', () => {
+                updateSelectionCounter();
+                saveCollectionSilent();
+            });
+
+            tbody.appendChild(tr);
+
+            if (note && note.trim() !== '') {
+                saveNoteToDB(rowId, note.trim());
+            }
+
+            return tr;
+        }
+
+        function getSelectedRows() {
+            const rows = document.querySelectorAll('#tableBody tr');
+            const selected = [];
+            rows.forEach(tr => {
+                const cb = tr.querySelector('.col-checkbox input[type="checkbox"]');
+                if (cb && cb.checked) selected.push(tr);
+            });
+            return selected;
+        }
+
+        function getColorByStatus(status) {
+            const colors = {
+                'урочище': '#e74c3c',
+                'деревня': '#2980b9',
+                'село': '#27ae60',
+                'пустошь': '#f1c40f',
+                'усадьба': '#8e44ad',
+                'церковь': '#8b3a2a'
+            };
+            return colors[status] || '#e74c3c';
+        }
+
+        function hexToKmlColor(hex) {
+            const h = hex.replace('#', '');
+            const r = h.substring(0, 2);
+            const g = h.substring(2, 4);
+            const b = h.substring(4, 6);
+            return 'ff' + b + g + r;
+        }
+
+        // Цвет стандартной иконки-булавки Google Earth по статусу точки.
+        function getPushpinIcon(status) {
+            const icons = {
+                'урочище': 'red',
+                'деревня': 'blu',
+                'село': 'grn',
+                'пустошь': 'ylw',
+                'усадьба': 'purp'
+            };
+            return icons[status] || 'red';
+        }
+
+        // Единый KML-стиль: жёлтая булавка + чёрная читаемая подпись
+        // на светлом фоне. Используется и в exportKML(), и в exportGoogleEarthKML().
+        // Стиль одинаков для всех статусов.
+        function buildKmlStyle(styleId) {
+            return `<Style id="${styleId}">\n` +
+                `  <IconStyle>\n` +
+                `    <scale>1.0</scale>\n` +
+                `    <Icon><href>http://maps.google.com/mapfiles/kml/pushpin/ylw-pushpin.png</href></Icon>\n` +
+                `  </IconStyle>\n` +
+                `  <LabelStyle>\n` +
+                `    <color>ff000000</color>\n` +
+                `    <scale>0.9</scale>\n` +
+                `  </LabelStyle>\n` +
+                `  <BalloonStyle>\n` +
+                `    <textColor>ff000000</textColor>\n` +
+                `    <bgColor>ffffffff</bgColor>\n` +
+                `  </BalloonStyle>\n` +
+                `</Style>\n`;
+        }
+
+        function escapeXml(value) {
+            return String(value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&apos;');
+        }
+
+        function exportKML() {
+            const rows = getSelectedRows();
+            if (rows.length === 0) { showToast('Нет выбранных точек'); return; }
+            let kml = '<?xml version="1.0" encoding="UTF-8"?>\n<kml xmlns="http://www.opengis.net/kml/2.2">\n<Document>\n';
+            let count = 0;
+            const promises = rows.map(async (tr) => {
+                const name = tr.querySelector('.col-name input')?.value || 'Точка';
+                const coordsText = tr.querySelector('.col-coords input')?.value || '';
+                const note = await getNoteFromDB(tr.dataset.rowId) || '';
+                const status = tr.querySelector('.col-status select')?.value || 'урочище';
+                const coords = parseCoordinates(coordsText);
+                if (coords) {
+                    let placemark = `<Placemark>\n`;
+                    placemark += `<name>${escapeXml(name)}</name>\n`;
+                    if (note.trim() !== '') placemark += `<description>${escapeXml(note)}</description>\n`;
+                    placemark += `<styleUrl>#style_${status}</styleUrl>\n`;
+                    placemark += `<Point><coordinates>${coords.lng},${coords.lat},0</coordinates></Point>\n`;
+                    placemark += `</Placemark>\n`;
+                    count++;
+                    return placemark;
+                }
+                return '';
+            });
+
+            Promise.all(promises).then(results => {
+                results.forEach(p => { if (p) kml += p; });
+                const statuses = ['урочище', 'деревня', 'село', 'пустошь', 'усадьба', 'церковь'];
+                statuses.forEach(s => {
+                    kml += buildKmlStyle(`style_${s}`);
+                });
+                kml += '</Document>\n</kml>';
+                if (count === 0) { showToast('Нет точек с координатами'); return; }
+                const blob = new Blob([kml], { type: 'application/vnd.google-earth.kml+xml;charset=utf-8' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `карта_кладоискателя_${new Date().toISOString().slice(0,10)}.kml`;
+                link.click();
+                URL.revokeObjectURL(link.href);
+                showToast(`🗺️ KML (${count} точек)`, 'success');
+            });
+        }
+
+        function exportGPX() {
+            const rows = getSelectedRows();
+            if (rows.length === 0) { showToast('Нет выбранных точек'); return; }
+            let gpx = '<?xml version="1.0" encoding="UTF-8"?>\n';
+            gpx += '<gpx xmlns="http://www.topografix.com/GPX/1/1" version="1.1">\n';
+            gpx += '<metadata><name>Карта кладоискателя</name></metadata>\n';
+            let count = 0;
+            const promises = rows.map(async (tr) => {
+                const name = tr.querySelector('.col-name input')?.value || 'Точка';
+                const coordsText = tr.querySelector('.col-coords input')?.value || '';
+                const note = await getNoteFromDB(tr.dataset.rowId) || '';
+                const coords = parseCoordinates(coordsText);
+                if (coords) {
+                    let wpt = `<wpt lat="${coords.lat}" lon="${coords.lng}">\n`;
+                    wpt += `<name>${escapeXml(name)}</name>\n`;
+                    if (note.trim() !== '') wpt += `<desc>${escapeXml(note)}</desc>\n`;
+                    wpt += `</wpt>\n`;
+                    count++;
+                    return wpt;
+                }
+                return '';
+            });
+
+            Promise.all(promises).then(results => {
+                results.forEach(p => { if (p) gpx += p; });
+                gpx += '</gpx>';
+                if (count === 0) { showToast('Нет точек с координатами'); return; }
+                const blob = new Blob([gpx], { type: 'application/gpx+xml;charset=utf-8' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `карта_кладоискателя_${new Date().toISOString().slice(0,10)}.gpx`;
+                link.click();
+                URL.revokeObjectURL(link.href);
+                showToast(`📍 GPX (${count} точек)`, 'success');
+            });
+        }
+
+        function exportGoogleEarthKML() {
+            const rows = getSelectedRows();
+            if (rows.length === 0) { showToast('Нет выбранных точек'); return; }
+            let kml = '<?xml version="1.0" encoding="UTF-8"?>\n';
+            kml += '<kml xmlns="http://www.opengis.net/kml/2.2">\n<Document>\n<name>Карта кладоискателя</name>\n';
+            const promises = rows.map(async (tr) => {
+                const name = tr.querySelector('.col-name input')?.value || 'Точка';
+                const coordsText = tr.querySelector('.col-coords input')?.value || '';
+                const note = await getNoteFromDB(tr.dataset.rowId) || '';
+                const status = tr.querySelector('.col-status select')?.value || 'урочище';
+                const coords = parseCoordinates(coordsText);
+                if (coords) {
+                    let pm = `<Placemark>\n`;
+                    pm += `<name>${escapeXml(name)}</name>\n`;
+                    pm += `<description>${escapeXml(note || '—')}</description>\n`;
+                    pm += `<styleUrl>#${status}</styleUrl>\n`;
+                    pm += `<Point><coordinates>${coords.lng},${coords.lat},0</coordinates></Point>\n`;
+                    pm += `</Placemark>\n`;
+                    return pm;
+                }
+                return '';
+            });
+
+            Promise.all(promises).then(results => {
+                results.forEach(p => { if (p) kml += p; });
+                const statuses = ['урочище', 'деревня', 'село', 'пустошь', 'усадьба', 'церковь'];
+                statuses.forEach(s => {
+                    kml += buildKmlStyle(s);
+                });
+                kml += '</Document>\n</kml>';
+                const blob = new Blob([kml], { type: 'application/vnd.google-earth.kml+xml;charset=utf-8' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `gearth_${new Date().toISOString().slice(0,10)}.kml`;
+                link.click();
+                URL.revokeObjectURL(link.href);
+                showToast(`🌍 Экспортировано ${rows.length} точек для Google Earth`, 'success');
+            });
+        }
+
+        // ============================================================
+        //  КАРТА
+        // ============================================================
+        let mapInstance = null;
+        let cardMapInstance = null;
+        let cardEsriLayer = null;
+        let cardRkkaLayer = null;
+        let addMarkerMode = false;
+        let isMapMinimized = false;
+        let mapState = { center: [55, 37], zoom: 6, markers: [] };
+
+        function createBaseLayers() {
+            const esriHybrid = L.layerGroup([
+                L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: '© ESRI', maxZoom: 19 }),
+                L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', { attribution: '© ESRI', maxZoom: 19 })
+            ]);
+            const yandex = L.tileLayer('https://core-renderer-tiles.maps.yandex.net/tiles?l=map&v=21.06.20&x={x}&y={y}&z={z}&scale=1&lang=ru_RU&projection=web_mercator', {
+                attribution: '© Яндекс.Карты',
+                maxZoom: 19
+            });
+            return { esriHybrid, yandex };
+        }
+
+        function buildMapWithLayers(lat, lng, zoom, markers = []) {
+            const container = document.getElementById('map-container');
+            if (mapInstance) { mapInstance.remove(); mapInstance = null; }
+
+            const layers = createBaseLayers();
+            mapInstance = L.map(container, { layers: [layers.esriHybrid], center: [lat, lng], zoom: zoom || 10 });
+
+            const baseMaps = {
+                '🛰️ Спутник (ESRI)': layers.esriHybrid,
+                '🌐 Яндекс.Карты': layers.yandex
+            };
+            L.control.layers(baseMaps, null, { position: 'topright', collapsed: false }).addTo(mapInstance);
+
+            mapState.center = [lat, lng];
+            mapState.zoom = zoom || 10;
+            mapState.markers = markers;
+
+            markers.forEach(m => {
+                let icon;
+                if (m.is_favorite) {
+                    // Избранные точки — золотая звёздочка.
+                    icon = L.divIcon({
+                        className: 'fav-marker',
+                        html: '<div style="font-size:20px;line-height:20px;text-align:center;text-shadow:0 0 4px #f5b301;">⭐</div>',
+                        iconSize: [20, 20],
+                        iconAnchor: [10, 10]
+                    });
+                } else {
+                    const color = getColorByStatus(m.status || 'урочище');
+                    icon = L.divIcon({
+                        className: 'custom-marker',
+                        html: `<div style="background-color:${color};width:14px;height:14px;border-radius:50%;border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.4);"></div>`,
+                        iconSize: [14, 14],
+                        iconAnchor: [7, 7]
+                    });
+                }
+                const title = m.popup || m.title || 'Точка';
+                const coordsStr = (m.lat !== undefined && m.lng !== undefined)
+                    ? `${Number(m.lat).toFixed(6)}, ${Number(m.lng).toFixed(6)}` : '';
+                let popupHtml = `<div style="font-family:'Playfair Display',serif;min-width:180px;">` +
+                    `<b>${escapeXml(title)}</b>`;
+                if (coordsStr) {
+                    popupHtml += `<div style="font-size:0.75rem;color:#666;margin-top:4px;">${coordsStr}</div>`;
+                }
+                if (m.rowId) {
+                    popupHtml += `<button onclick="openCard('${m.rowId}');" style="margin-top:6px;padding:4px 10px;border-radius:20px;background:#5e4a32;color:#f0e3d0;border:none;cursor:pointer;font-family:'Playfair Display',serif;">📝 Открыть карточку</button>`;
+                }
+                popupHtml += `</div>`;
+
+                const marker = L.marker([m.lat, m.lng], { icon }).addTo(mapInstance).bindPopup(popupHtml);
+                marker.on('mouseover', function() { this.openPopup(); });
+                // Для маркеров с кнопкой не закрываем попап при уходе мыши,
+                // иначе кнопку "Открыть карточку" невозможно нажать.
+                if (!m.rowId) {
+                    marker.on('mouseout', function() { this.closePopup(); });
+                }
+            });
+
+            // Маркер точки отсчёта расстояния + концентрические круги радиусов.
+            if (distanceBasePoint) {
+                addDistanceBasePointToMap(mapInstance);
+            }
+            updateMapBasePointInfo();
+
+            if (markers.length > 1) {
+                const group = L.featureGroup(markers.map(m => L.marker([m.lat, m.lng])));
+                mapInstance.fitBounds(group.getBounds(), { padding: [50, 50] });
+            }
+
+            mapInstance.on('click', function(e) {
+                if (addMarkerMode) {
+                    addMarkerFromMap(e.latlng.lat, e.latlng.lng);
+                }
+            });
+
+            mapInstance.on('moveend', function() {
+                if (mapInstance) {
+                    mapState.center = mapInstance.getCenter();
+                    mapState.zoom = mapInstance.getZoom();
+                }
+            });
+
+            mapInstance.invalidateSize();
+            return mapInstance;
+        }
+
+        // Рисует на карте точку отсчёта (синий маркер) и 3 вложенных круга радиусов.
+        function addDistanceBasePointToMap(map) {
+            if (!distanceBasePoint) return;
+            const lat = Number(distanceBasePoint.lat);
+            const lng = Number(distanceBasePoint.lng);
+
+            const circles = [
+                { radius: 25000, color: '#e08a3a', fillColor: '#e08a3a', fillOpacity: 0.05 },
+                { radius: 10000, color: '#d8c84a', fillColor: '#d8c84a', fillOpacity: 0.08 },
+                { radius: 5000,  color: '#7ac86a', fillColor: '#7ac86a', fillOpacity: 0.1 }
+            ];
+            circles.forEach(c => {
+                L.circle([lat, lng], {
+                    radius: c.radius,
+                    color: c.color,
+                    fillColor: c.fillColor,
+                    fillOpacity: c.fillOpacity,
+                    weight: 1
+                }).addTo(map);
+            });
+
+            const icon = L.divIcon({
+                className: 'base-point-marker',
+                html: '<div style="background-color:#1a5a9a;width:18px;height:18px;border-radius:50%;border:3px solid #ffffff;box-shadow:0 0 0 3px rgba(26,90,154,0.55),0 2px 8px rgba(0,0,0,0.5);"></div>',
+                iconSize: [18, 18],
+                iconAnchor: [9, 9]
+            });
+
+            const latStr = lat.toFixed(6);
+            const lngStr = lng.toFixed(6);
+            const popupHtml =
+                `<b>Точка отсчёта:</b> ${escapeXml(distanceBasePoint.label)}<br>` +
+                `Координаты: ${latStr}, ${lngStr}<br>` +
+                `<button class="btn btn-small" onclick="copyBasePointCoords()">📋 Копировать координаты</button>`;
+
+            L.marker([lat, lng], { icon, zIndexOffset: 1000 })
+                .addTo(map)
+                .bindPopup(popupHtml);
+        }
+
+        // Обновляет подпись "Точка отсчёта: ..." в шапке карты.
+        function updateMapBasePointInfo() {
+            const el = document.getElementById('mapBasePointInfo');
+            if (!el) return;
+            if (distanceBasePoint) {
+                el.textContent = 'Точка отсчёта: ' + distanceBasePoint.label;
+                el.style.display = 'block';
+            } else {
+                el.textContent = '';
+                el.style.display = 'none';
+            }
+        }
+
+        // Копирование координат точки отсчёта в буфер обмена.
+        function copyBasePointCoords() {
+            if (!distanceBasePoint) return;
+            const text = Number(distanceBasePoint.lat).toFixed(6) + ', ' +
+                         Number(distanceBasePoint.lng).toFixed(6);
+            const fallback = () => {
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                showToast('✅ Координаты скопированы', 'success');
+            };
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text)
+                    .then(() => showToast('✅ Координаты скопированы', 'success'))
+                    .catch(fallback);
+            } else {
+                fallback();
+            }
+        }
+
+        function toggleMapFullscreen() {
+            const modal = document.getElementById('mapModalContent');
+            if (!document.fullscreenElement) {
+                modal.requestFullscreen?.() || modal.webkitRequestFullscreen?.() || modal.msRequestFullscreen?.();
+                document.getElementById('mapModal').style.padding = '0';
+                document.getElementById('mapModal').style.background = '#000';
+                document.querySelector('.map-modal-content').style.maxWidth = '100%';
+                document.querySelector('.map-modal-content').style.maxHeight = '100vh';
+                document.querySelector('.map-modal-content').style.borderRadius = '0';
+                document.querySelector('.map-modal-content').style.border = 'none';
+                showToast('⛶ Нажмите ESC для выхода из полноэкранного режима', 'success');
+            } else {
+                document.exitFullscreen?.() || document.webkitExitFullscreen?.() || document.msExitFullscreen?.();
+            }
+        }
+
+        document.addEventListener('fullscreenchange', function() {
+            if (!document.fullscreenElement) {
+                document.getElementById('mapModal').style.padding = '20px';
+                document.getElementById('mapModal').style.background = 'rgba(0,0,0,0.7)';
+                document.querySelector('.map-modal-content').style.maxWidth = '900px';
+                document.querySelector('.map-modal-content').style.maxHeight = '90vh';
+                document.querySelector('.map-modal-content').style.borderRadius = '30px';
+                document.querySelector('.map-modal-content').style.border = '3px solid #b49b7a';
+                if (mapInstance) setTimeout(() => mapInstance.invalidateSize(), 100);
+            }
+        });
+
+        function minimizeMap() {
+            const modal = document.getElementById('mapModal');
+            if (isMapMinimized) {
+                modal.classList.add('active');
+                document.getElementById('minimizeMapBtn').textContent = '✖ Свернуть';
+                setTimeout(() => {
+                    if (mapInstance) {
+                        mapInstance.invalidateSize();
+                    } else {
+                        const center = mapState.center || [55, 37];
+                        const zoom = mapState.zoom || 6;
+                        const markers = mapState.markers || [];
+                        buildMapWithLayers(center[0], center[1], zoom, markers);
+                    }
+                }, 100);
+                isMapMinimized = false;
+            } else {
+                modal.classList.remove('active');
+                document.getElementById('minimizeMapBtn').textContent = '🗺️ Развернуть';
+                isMapMinimized = true;
+            }
+        }
+
+        function toggleAddMarkerMode() {
+            const btn = document.getElementById('mapAddMarkerBtn');
+            addMarkerMode = !addMarkerMode;
+            if (addMarkerMode) {
+                btn.textContent = '✖ Отменить';
+                btn.classList.add('active');
+                showToast('📍 Кликните на карте, чтобы добавить метку', 'success');
+                if (mapInstance) { mapInstance.getContainer().style.cursor = 'crosshair'; }
+            } else {
+                btn.textContent = '➕ Добавить метку';
+                btn.classList.remove('active');
+                if (mapInstance) { mapInstance.getContainer().style.cursor = ''; }
+            }
+        }
+
+        function addMarkerFromMap(lat, lng) {
+            if (!addMarkerMode) return;
+            const name = prompt('Введите название точки:', 'Новая метка');
+            if (name === null) { toggleAddMarkerMode(); return; }
+            const note = prompt('Введите комментарий (справку):', '');
+            if (note === null) { toggleAddMarkerMode(); return; }
+            const coordsStr = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+            const tr = addRow(name, coordsStr, '', 'урочище');
+            tr.dataset.source = 'user';
+            if (note) saveNoteToDB(tr.dataset.rowId, note);
+            saveCollectionSilent();
+            showToast(`✅ Добавлена точка "${name}"`, 'success');
+            toggleAddMarkerMode();
+            showAllOnMap();
+        }
+
+        function openMap(lat, lng, title = '📍 Точка', rowId = null) {
+            const modal = document.getElementById('mapModal');
+            document.getElementById('mapTitle').textContent = title;
+            modal.classList.add('active');
+            document.getElementById('minimizeMapBtn').textContent = '✖ Свернуть';
+            isMapMinimized = false;
+
+            setTimeout(() => {
+                const lookRow = rowId ? (allData || []).find(r => r.rowId === rowId) : null;
+                const markers = [{ lat, lng, popup: title, rowId: rowId,
+                                   status: lookRow ? (lookRow.status || 'урочище') : 'урочище',
+                                   is_favorite: lookRow ? lookRow.is_favorite === true : false }];
+                buildMapWithLayers(lat, lng, 15, markers);
+                if (addMarkerMode) { toggleAddMarkerMode(); }
+                document.getElementById('mapAddMarkerBtn').textContent = '➕ Добавить метку';
+                document.getElementById('mapAddMarkerBtn').classList.remove('active');
+            }, 100);
+        }
+
+        function closeMap() {
+            document.getElementById('mapModal').classList.remove('active');
+            if (mapInstance) { mapInstance.remove(); mapInstance = null; }
+            if (addMarkerMode) {
+                addMarkerMode = false;
+                document.getElementById('mapAddMarkerBtn').textContent = '➕ Добавить метку';
+                document.getElementById('mapAddMarkerBtn').classList.remove('active');
+            }
+            isMapMinimized = false;
+            document.getElementById('minimizeMapBtn').textContent = '✖ Свернуть';
+        }
+
+        function showAllOnMap() {
+            // Берём ВСЕ отфильтрованные точки из данных, а не только
+            // отрендеренные строки таблицы (бесконечный скролл рендерит не всё).
+            const filtered = getFilteredData();
+            const markers = [];
+            filtered.forEach(row => {
+                let lat = parseFloat(row.lat);
+                let lng = parseFloat(row.lng);
+                if (isNaN(lat) || isNaN(lng)) {
+                    // Фолбэк для вручную добавленных точек (координаты в поле coords).
+                    const c = parseCoordinates(row.coords);
+                    if (c) { lat = c.lat; lng = c.lng; }
+                }
+                if (!isNaN(lat) && !isNaN(lng)) {
+                    markers.push({
+                        lat: lat,
+                        lng: lng,
+                        popup: row.name || 'Точка',
+                        status: row.status || 'урочище',
+                        rowId: row.rowId,
+                        is_favorite: row.is_favorite === true,
+                        has_church: row.has_church,
+                        has_sobory_church: row.has_sobory_church
+                    });
+                }
+            });
+
+            if (markers.length === 0) { showToast('Нет точек с координатами'); return; }
+
+            const modal = document.getElementById('mapModal');
+            document.getElementById('mapTitle').textContent = `🗺️ Все точки (${markers.length})`;
+            modal.classList.add('active');
+            document.getElementById('minimizeMapBtn').textContent = '✖ Свернуть';
+            isMapMinimized = false;
+
+            setTimeout(() => {
+                const avgLat = markers.reduce((s, m) => s + m.lat, 0) / markers.length;
+                const avgLng = markers.reduce((s, m) => s + m.lng, 0) / markers.length;
+                buildMapWithLayers(avgLat, avgLng, 10, markers);
+                if (addMarkerMode) { toggleAddMarkerMode(); }
+                document.getElementById('mapAddMarkerBtn').textContent = '➕ Добавить метку';
+                document.getElementById('mapAddMarkerBtn').classList.remove('active');
+            }, 100);
+        }
+
+        // ============================================================
+        //  ЗАГРУЗКА KML
+        // ============================================================
+        function loadKML(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const kmlText = e.target.result;
+                    const parser = new DOMParser();
+                    const kmlDoc = parser.parseFromString(kmlText, 'text/xml');
+                    const placemarks = kmlDoc.getElementsByTagName('Placemark');
+                    if (placemarks.length === 0) {
+                        showToast('❌ KML не содержит точек', 'error');
+                        return;
+                    }
+                    let added = 0;
+                    const notePromises = [];
+                    for (let i = 0; i < placemarks.length; i++) {
+                        const pm = placemarks[i];
+                        const name = pm.getElementsByTagName('name')[0]?.textContent || `Точка ${i+1}`;
+                        const desc = pm.getElementsByTagName('description')[0]?.textContent || '';
+                        const coordsElem = pm.getElementsByTagName('coordinates')[0];
+                        if (coordsElem) {
+                            const coordStr = coordsElem.textContent.trim();
+                            const parts = coordStr.split(',').map(s => parseFloat(s.trim()));
+                            if (parts.length >= 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+                                const lng = parts[0];
+                                const lat = parts[1];
+                                const tr = addRowSilent(name, `${lat}, ${lng}`, '', 'урочище', '', null, 'imported');
+                                if (desc) {
+                                    notePromises.push(saveNoteToDB(tr.dataset.rowId, desc));
+                                }
+                                added++;
+                            }
+                        }
+                    }
+                    Promise.all(notePromises).then(() => {
+                        saveCollectionSilent();
+                        applySearch();
+                        updateGroupFilter();
+                        updateSelectionCounter();
+                        showToast(`✅ Импортировано ${added} точек из KML`, 'success');
+                    });
+                } catch (err) {
+                    showToast('❌ Ошибка импорта KML: ' + err.message, 'error');
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        // ============================================================
+        //  КАРТОЧКА ТОЧКИ
+        // ============================================================
+        let currentCardRowId = null;
+
+        async function openCard(rowId) {
+            if (!rowId) return;
+            currentCardRowId = rowId;
+
+            // ---- Блок "Карта РККА 1941" (удаляем старую карту) ----
+            if (cardMapInstance) {
+                cardMapInstance.remove();
+                cardMapInstance = null;
+                cardEsriLayer = null;
+                cardRkkaLayer = null;
+            }
+            document.getElementById('cardRkkaField').style.display = 'none';
+
+            // Ищем строку в DOM; если точки нет на текущей странице пагинации —
+            // берём данные напрямую из allData, чтобы карточка всё равно открылась.
+            const tr = document.querySelector(`#tableBody tr[data-row-id="${rowId}"]`);
+            let name = '', coords = '', district = '', status = 'урочище';
+            if (tr) {
+                name = tr.querySelector('.col-name input')?.value || '';
+                coords = tr.querySelector('.col-coords input')?.value || '';
+                district = tr.querySelector('.col-district input')?.value || '';
+                status = tr.querySelector('.col-status select')?.value || '';
+            } else {
+                const row = (allData || []).find(r => r.rowId === rowId);
+                if (!row) {
+                    showToast('❌ Точка не найдена', 'error');
+                    currentCardRowId = null;
+                    return;
+                }
+                name = row.name || '';
+                coords = row.coords || '';
+                district = row.district || '';
+                status = row.status || 'урочище';
+            }
+
+            document.getElementById('cardName').value = name;
+            document.getElementById('cardCoords').value = coords;
+            document.getElementById('cardDistrict').value = district;
+            document.getElementById('cardStatus').value = status;
+
+            // ---- Кнопка "Избранное" ----
+            const favBtn = document.getElementById('cardFavBtn');
+            if (favBtn) {
+                const rowFav = (allData || []).find(r => r.rowId === rowId);
+                const isFav = rowFav ? rowFav.is_favorite === true : false;
+                favBtn.textContent = isFav ? '⭐ Убрать из избранного' : '☆ Добавить в избранное';
+                favBtn.style.background = isFav ? '#f5b301' : '#5e4a32';
+                favBtn.dataset.rowId = rowId;
+            }
+
+            // ---- Блок "Архив 1859" ----
+            const archField = document.getElementById('cardArchivalField');
+            const archContent = document.getElementById('cardArchivalContent');
+            const arch = (allData || []).find(r => r.rowId === rowId) || {};
+            if (arch.archival_name) {
+                const m = (arch.muzhchin_1859 != null) ? arch.muzhchin_1859 : '—';
+                const f = (arch.zhenshchin_1859 != null) ? arch.zhenshchin_1859 : '—';
+                const total = (Number(arch.muzhchin_1859) || 0) + (Number(arch.zhenshchin_1859) || 0);
+                let html = '';
+                html += `<div class="card-archival-row"><span class="card-archival-label">Название в архиве</span><span class="card-archival-value">${escapeXml(arch.archival_name)}</span></div>`;
+                if (arch.archival_list_number != null) {
+                    html += `<div class="card-archival-row"><span class="card-archival-label">Номер в списке</span><span class="card-archival-value">#${arch.archival_list_number}</span></div>`;
+                }
+                if (arch.dvorov_1859 != null) {
+                    html += `<div class="card-archival-row"><span class="card-archival-label">Дворов</span><span class="card-archival-value">${arch.dvorov_1859}</span></div>`;
+                }
+                if (arch.muzhchin_1859 != null || arch.zhenshchin_1859 != null) {
+                    html += `<div class="card-archival-row"><span class="card-archival-label">Жителей</span><span class="card-archival-value">${m} м., ${f} ж. (всего ${total})</span></div>`;
+                }
+                if (arch.church_1859) {
+                    html += `<div class="card-archival-row"><span class="card-archival-label">Церковь</span><span class="card-archival-value card-archival-church">${escapeXml(arch.church_1859)}</span></div>`;
+                }
+                html += `<div class="card-archival-row"><span class="card-archival-label">Источник</span><span class="card-archival-value">Список населённых мест Тульской губернии 1859 г.</span></div>`;
+                archContent.innerHTML = html;
+                archField.style.display = 'block';
+            } else {
+                archContent.innerHTML = '';
+                archField.style.display = 'none';
+            }
+
+            // ---- Блок "Церковь (Соборы.ру)" ----
+            const sobField = document.getElementById('cardSoboryField');
+            const sobContent = document.getElementById('cardSoboryContent');
+            if (arch.sobory_name) {
+                let statusClass = '';
+                if (arch.sobory_status === 'действующая') statusClass = 'card-sobory-status-active';
+                else if (arch.sobory_status === 'недействующая') statusClass = 'card-sobory-status-inactive';
+                else if (arch.sobory_status === 'не сохранилась') statusClass = 'card-sobory-status-lost';
+                const year = arch.sobory_year ? arch.sobory_year : '—';
+                const sobStatus = arch.sobory_status || 'неизвестно';
+                let shtml = '';
+                shtml += `<div class="card-sobory-row"><span class="card-sobory-label">Название</span><span class="card-sobory-value">${escapeXml(arch.sobory_name)}</span></div>`;
+                shtml += `<div class="card-sobory-row"><span class="card-sobory-label">Год постройки</span><span class="card-sobory-value">${escapeXml(String(year))}</span></div>`;
+                shtml += `<div class="card-sobory-row"><span class="card-sobory-label">Статус</span><span class="card-sobory-value ${statusClass}">${escapeXml(sobStatus)}</span></div>`;
+                if (arch.sobory_id) {
+                    shtml += `<div class="card-sobory-row"><span class="card-sobory-label">Источник</span><span class="card-sobory-value"><a href="https://sobory.ru/article/?object=${arch.sobory_id}" target="_blank" rel="noopener noreferrer">Соборы.ру</a></span></div>`;
+                }
+                sobContent.innerHTML = shtml;
+                sobField.style.display = 'block';
+            } else {
+                sobContent.innerHTML = '';
+                sobField.style.display = 'none';
+            }
+
+            const savedNote = await getNoteFromDB(rowId);
+            document.getElementById('cardNote').value = savedNote || '';
+
+            await renderCardGallery(rowId);
+
+            document.getElementById('cardModal').classList.add('active');
+            document.getElementById('cardTitle').textContent = `📄 ${name}`;
+
+            // ---- Блок "Карта РККА 1941": интерактивная карта сравнения ----
+            const rowForRkka = (allData || []).find(r => r.rowId === rowId);
+            if (rowForRkka) {
+                renderCardRkkaMap(rowForRkka);
+            } else {
+                document.getElementById('cardRkkaField').style.display = 'none';
+            }
+        }
+
+        // Явно делаем доступной для onclick в попапах Leaflet.
+        window.openCard = openCard;
+
+        function closeCard() {
+            document.getElementById('cardModal').classList.remove('active');
+            currentCardRowId = null;
+            if (cardMapInstance) {
+                cardMapInstance.remove();
+                cardMapInstance = null;
+                cardEsriLayer = null;
+                cardRkkaLayer = null;
+            }
+        }
+
+        async function saveCardNote() {
+            if (!currentCardRowId) return;
+            const note = document.getElementById('cardNote').value;
+            await saveNoteToDB(currentCardRowId, note);
+            showToast('✅ Справка сохранена', 'success');
+        }
+
+        function copyCardCoords() {
+            const coords = document.getElementById('cardCoords').value;
+            if (!coords.trim()) { showToast('❌ Нет координат', 'error'); return; }
+            navigator.clipboard.writeText(coords).then(() => {
+                showToast('✅ Координаты скопированы', 'success');
+            }).catch(() => {
+                const textarea = document.createElement('textarea');
+                textarea.value = coords;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                showToast('✅ Координаты скопированы', 'success');
+            });
+        }
+
+        function openCardOnMap() {
+            const coordsText = document.getElementById('cardCoords').value;
+            const coords = parseCoordinates(coordsText);
+            if (!coords) { showToast('❌ Некорректные координаты', 'error'); return; }
+            const name = document.getElementById('cardName').value || 'Точка';
+            openMap(coords.lat, coords.lng, name, currentCardRowId);
+        }
+
+        function openCardEsri() {
+            const coordsText = document.getElementById('cardCoords').value;
+            const coords = parseCoordinates(coordsText);
+            if (!coords) { showToast('❌ Некорректные координаты', 'error'); return; }
+            const url = `https://www.arcgis.com/home/webmap/viewer.html?center=${coords.lng},${coords.lat}&level=15`;
+            window.open(url, '_blank', 'noopener,noreferrer');
+            showToast('🛰️ Открыто на ESRI World Imagery', 'success');
+        }
+
+        function openCardYandex() {
+            const coordsText = document.getElementById('cardCoords').value;
+            const coords = parseCoordinates(coordsText);
+            if (!coords) { showToast('❌ Некорректные координаты', 'error'); return; }
+            const name = document.getElementById('cardName').value || 'Точка';
+            openYandexMaps(coords.lat, coords.lng, name);
+        }
+
+        // ============================================================
+        //  ФОТО В КАРТОЧКЕ
+        // ============================================================
+        async function getCardPhotos(rowId) {
+            try {
+                return await getPhotosFromDB(rowId);
+            } catch (e) {
+                console.error('Error loading photos:', e);
+                return [];
+            }
+        }
+
+        async function saveCardPhotos(rowId, photos) {
+            try {
+                await savePhotosToDB(rowId, photos);
+            } catch (e) {
+                console.error('Error saving photos:', e);
+                showToast('❌ Ошибка сохранения фото', 'error');
+            }
+        }
+
+        async function renderCardGallery(rowId) {
+            const gallery = document.getElementById('cardGallery');
+            const photos = await getCardPhotos(rowId);
+            gallery.innerHTML = '';
+            if (photos.length === 0) {
+                gallery.innerHTML = '<div class="empty-text">📷 Нет загруженных фото</div>';
+                document.getElementById('cardPhotoCount').textContent = '0 фото';
+                return;
+            }
+            photos.forEach((url, index) => {
+                const img = document.createElement('img');
+                img.src = url;
+                img.alt = `Фото ${index+1}`;
+                img.title = 'Клик для просмотра на весь экран / правый клик для удаления';
+                img.onclick = function() { openFullscreen(url); };
+                img.oncontextmenu = function(e) {
+                    e.preventDefault();
+                    if (confirm('Удалить это фото?')) {
+                        removeCardPhoto(rowId, index);
+                    }
+                };
+                gallery.appendChild(img);
+            });
+            document.getElementById('cardPhotoCount').textContent = `${photos.length} фото`;
+        }
+
+        function compressImage(dataUrl, maxWidth = 600, quality = 0.7) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+                    if (width > maxWidth) {
+                        height = height * maxWidth / width;
+                        width = maxWidth;
+                    }
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    resolve(canvas.toDataURL('image/jpeg', quality));
+                };
+                img.src = dataUrl;
+            });
+        }
+
+        async function uploadCardPhotos(event) {
+            const files = event.target.files;
+            if (!files.length) { showToast('❌ Файлы не выбраны', 'error'); return; }
+            if (!currentCardRowId) { showToast('❌ Ошибка: не выбрана точка', 'error'); return; }
+
+            const photos = await getCardPhotos(currentCardRowId);
+            let loaded = 0;
+            const total = files.length;
+
+            for (let i = 0; i < total; i++) {
+                try {
+                    const dataUrl = await new Promise((resolve) => {
+                        const reader = new FileReader();
+                        reader.onload = e => resolve(e.target.result);
+                        reader.readAsDataURL(files[i]);
+                    });
+                    const compressed = await compressImage(dataUrl);
+                    photos.push(compressed);
+                    loaded++;
+                } catch (e) {
+                    console.error('Error uploading photo:', e);
+                    loaded++;
+                }
+                if (loaded === total) {
+                    await saveCardPhotos(currentCardRowId, photos);
+                    await renderCardGallery(currentCardRowId);
+                    showToast(`✅ Загружено ${total} фото`, 'success');
+                }
+            }
+            event.target.value = '';
+        }
+
+        async function removeCardPhoto(rowId, index) {
+            const photos = await getCardPhotos(rowId);
+            photos.splice(index, 1);
+            await saveCardPhotos(rowId, photos);
+            await renderCardGallery(rowId);
+            showToast('🗑️ Фото удалено', 'success');
+        }
+
+        async function deleteAllCardPhotos() {
+            if (!currentCardRowId) return;
+            if (!confirm('Удалить все фото для этой точки?')) return;
+            await saveCardPhotos(currentCardRowId, []);
+            await renderCardGallery(currentCardRowId);
+            showToast('🗑️ Все фото удалены', 'success');
+        }
+
+        // ============================================================
+        //  FULLSCREEN (для фото в карточке)
+        // ============================================================
+        function openFullscreen(url) {
+            const overlay = document.getElementById('fullscreenOverlay');
+            const img = document.getElementById('fullscreenImage');
+            img.src = url;
+            overlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeFullscreen() {
+            document.getElementById('fullscreenOverlay').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        // ============================================================
+        //  КАРТА СРАВНЕНИЯ РККА 1941 ↔ ESRI SATELLITE (в карточке)
+        // ============================================================
+        function renderCardRkkaMap(row) {
+            const container = document.getElementById('cardRkkaMap');
+            if (!container) return;
+
+            if (cardMapInstance) {
+                cardMapInstance.remove();
+                cardMapInstance = null;
+                cardEsriLayer = null;
+                cardRkkaLayer = null;
+            }
+
+            // В записях allData поле id может отсутствовать — берём его из rowId ('pwa_<id>').
+            let numericId = row.id;
+            if (numericId == null && row.rowId && row.rowId.startsWith('pwa_')) {
+                numericId = row.rowId.slice(4);
+            }
+            if (numericId == null || numericId === '') {
+                document.getElementById('cardRkkaField').style.display = 'none';
+                return;
+            }
+
+            const screenshotUrl = 'screenshots/pwa_' + numericId + '.jpg';
+            const lat = parseFloat(row.lat);
+            const lng = parseFloat(row.lng);
+
+            if (isNaN(lat) || isNaN(lng)) {
+                document.getElementById('cardRkkaField').style.display = 'none';
+                return;
+            }
+
+            const slider = document.getElementById('cardRkkaSlider');
+            if (slider) slider.value = 0;
+
+            const testImg = new Image();
+            testImg.onload = function() {
+                document.getElementById('cardRkkaField').style.display = 'block';
+
+                cardMapInstance = L.map(container, {
+                    center: [lat, lng],
+                    zoom: 15,
+                    zoomControl: true,
+                    attributionControl: false,
+                    scrollWheelZoom: true,
+                    doubleClickZoom: true
+                });
+
+                const zoom = 15;
+                const n = Math.pow(2, zoom);
+
+                const tileX = Math.floor((lng + 180) / 360 * n);
+                const latRad = lat * Math.PI / 180;
+                const tileY = Math.floor((1 - Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI) / 2 * n);
+
+                const leftTile = tileX - 1;
+                const rightTile = tileX + 2;
+                const topTile = tileY - 1;
+                const bottomTile = tileY + 2;
+
+                const leftLng = leftTile / n * 360 - 180;
+                const rightLng = rightTile / n * 360 - 180;
+
+                function tileToLat(y) {
+                    const m = Math.PI - 2 * Math.PI * y / n;
+                    return 180 / Math.PI * Math.atan(0.5 * (Math.exp(m) - Math.exp(-m)));
+                }
+
+                const topLat = tileToLat(topTile);
+                const bottomLat = tileToLat(bottomTile);
+
+                const bounds = [[bottomLat, leftLng], [topLat, rightLng]];
+
+                cardRkkaLayer = L.imageOverlay(screenshotUrl, bounds, {
+                    opacity: 1.0,
+                    interactive: false,
+                    pane: 'overlayPane',
+                    zIndex: 1
+                }).addTo(cardMapInstance);
+
+                cardEsriLayer = L.tileLayer(
+                    'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+                    {
+                        maxZoom: 19,
+                        opacity: 0.0,
+                        attribution: '© ESRI',
+                        pane: 'overlayPane',
+                        zIndex: 2
+                    }
+                ).addTo(cardMapInstance);
+
+                cardMapInstance.fitBounds(bounds);
+                cardMapInstance.setMaxBounds(bounds.pad(0.1));
+
+                setRkkaOpacity(0);
+            };
+
+            testImg.onerror = function() {
+                document.getElementById('cardRkkaField').style.display = 'none';
+            };
+            testImg.src = screenshotUrl;
+        }
+
+        function setRkkaOpacity(value) {
+            const v = parseInt(value, 10) / 100;
+            if (cardEsriLayer) {
+                cardEsriLayer.setOpacity(v);
+            }
+            if (cardRkkaLayer) {
+                cardRkkaLayer.setOpacity(1);
+            }
+        }
+        window.setRkkaOpacity = setRkkaOpacity;
+
+        // ============================================================
+        //  ОБРАБОТЧИКИ
+        // ============================================================
+        document.getElementById('mapModal').addEventListener('click', function(e) {
+            if (e.target === this) closeMap();
+        });
+
+        document.getElementById('cardModal').addEventListener('click', function(e) {
+            if (e.target === this) closeCard();
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                if (document.getElementById('cardModal').classList.contains('active')) {
+                    closeCard();
+                } else if (document.getElementById('mapModal').classList.contains('active')) {
+                    closeMap();
+                } else {
+                    closeFullscreen();
+                }
+            }
+        });
+
+        // ============================================================
+        //  ИНИЦИАЛИЗАЦИЯ
+        // ============================================================
+        document.addEventListener('DOMContentLoaded', async function() {
+            await initDB();
+
+            // Всегда пытаемся сверить версию базы: importUrochishaBase сама
+            // решает, нужно ли перезагружать коллекцию (версия/наличие данных).
+            const ok = await importUrochishaBase({ auto: true });
+
+            const existing = await loadCollectionFromDB() || [];
+            if (!ok && existing.length === 0) {
+                addRow('Олонино', '58.038684, 42.906449', 'Антроповский', 'урочище');
+                addRow('Бушнево', '58.538107, 42.869752', 'Галичский', 'село');
+                addRow('Прудки', '54.37658, 37.88627', 'Ясногорский', 'урочище');
+                setTimeout(() => saveCollectionSilent(), 300);
+            }
+
+            // Бесконечный скролл: догружаем строки у нижней границы таблицы.
+            const tableWrap = document.querySelector('.table-wrap');
+            if (tableWrap) {
+                tableWrap.addEventListener('scroll', () => {
+                    if (tableWrap.scrollTop + tableWrap.clientHeight >= tableWrap.scrollHeight - 200) {
+                        const filtered = getFilteredData();
+                        if (renderedCount < filtered.length) {
+                            appendTableChunk();
+                        }
+                    }
+                });
+            }
+
+            updateGroupFilter();
+            renderTablePage(1);
+            updateFavCounter();
+        });
+    </script>
+
+    <!-- ============================================================
+         PWA: РЕГИСТРАЦИЯ SERVICE WORKER + СТАТУС ОФФЛАЙН
+    ============================================================ -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(function(reg) {
+                        console.log('[PWA] Service Worker зарегистрирован. Scope:', reg.scope);
+                    })
+                    .catch(function(err) {
+                        console.warn('[PWA] Ошибка регистрации Service Worker:', err);
+                    });
+            });
+        }
+
+        window.addEventListener('online', function() {
+            if (typeof showToast === 'function') showToast('🌐 Онлайн — карта подгружается', 'success');
+        });
+        window.addEventListener('offline', function() {
+            if (typeof showToast === 'function') showToast('📴 Оффлайн — данные из кэша', 'error');
+        });
+    </script>
+</body>
+</html>

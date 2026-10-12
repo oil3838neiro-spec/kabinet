@@ -1,0 +1,42 @@
+{
+  "name": "КабинетЪ кладоискателя — Тульская область",
+  "short_name": "КабинетЪ",
+  "description": "Карты, заметки и маршруты кладоискателя по Тульской области. Работает оффлайн.",
+  "lang": "ru",
+  "dir": "ltr",
+  "start_url": "/index.html",
+  "scope": "/",
+  "id": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#ece3d5",
+  "theme_color": "#5e4a32",
+  "categories": ["travel", "navigation", "utilities"],
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Открыть карту",
+      "short_name": "Карта",
+      "url": "/index.html"
+    }
+  ]
+}

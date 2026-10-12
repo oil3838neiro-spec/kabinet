@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+*.pyo
+*.bak
+*.bak.*
+.DS_Store
+Thumbs.db
+cfo_boundaries.geojson
+*.mbtiles
+*.kmz
+*.py
