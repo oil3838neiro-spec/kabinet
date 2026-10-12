@@ -4,7 +4,7 @@
    Тайлы карт (Яндекс/ESRI/OSM) и тяжёлые геоданные НЕ кэшируются.
    ============================================================ */
 
-const CACHE_VERSION = 'v2026-10-12';
+const CACHE_VERSION = 'v2026-10-12-mobile';
 const CACHE_NAME    = 'kabinet-' + CACHE_VERSION;          // 'kabinet-v2026-10-12'
 const CACHE_STATIC  = CACHE_NAME + '-static';              // HTML/JSON/CSS/JS, иконки
 const CACHE_DATA    = CACHE_NAME + '-data';                // data/urochisha.json

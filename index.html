@@ -162,12 +162,12 @@
         .save-status{display:inline-flex;align-items:center;justify-content:center;gap:4px;font-family:'Playfair Display',serif;font-size:0.75rem;color:#2d6a4f;background:#e7f0e9;padding:4px 10px;border-radius:30px;border:1px solid #b7d3bd;transition:all 0.3s ease;white-space:nowrap;margin-left:8px;min-width:180px}
         .save-status.saving{color:#7a644a;background:#f5ede1;border-color:#d2c0a8}
         .save-status.error{color:#8b3a2a;background:#f5e1dd;border-color:#d3b7b7}
-        @media (max-width:700px){.catalog-container{padding:1rem 0.6rem}.catalog-header h1{font-size:1.2rem}.btn{font-size:0.65rem;padding:0.2rem 0.8rem}.btn-add-fixed{bottom:15px;right:15px;padding:0.4rem 1rem;font-size:0.8rem}#map-container{height:300px}.search-box{flex:1 1 100px}.compass{font-size:1.8rem;top:5px;right:10px}.card-modal-content{padding:12px}.card-field input,.card-field textarea{font-size:0.8rem}.card-gallery img{width:60px;height:60px}}
-        @media (max-width:700px){
-            body{height:auto;overflow:auto;padding:1rem 0.6rem}
-            .catalog-container{height:auto;overflow:visible;margin:0 auto;padding:1rem 0.6rem}
-            .table-wrap{flex:none;overflow:visible;max-height:none;min-height:0}
-            #urTable thead th{position:static}
+        /* --- 0. Базовый мобильный layout: скролл страницы вместо внутреннего --- */
+        @media (max-width: 768px) {
+            body { height: auto !important; overflow: auto !important; padding: 1rem 0.6rem; }
+            .catalog-container { height: auto !important; overflow: visible !important; margin: 0 auto; padding: 0.8rem 0.5rem 1rem; }
+            .table-wrap { flex: none; overflow-x: auto !important; overflow-y: visible; max-height: none; min-height: 0; -webkit-overflow-scrolling: touch; }
+            #urTable thead th { position: static; }
         }
 
         /* ============================================================
